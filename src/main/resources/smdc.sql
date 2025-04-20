@@ -6,15 +6,26 @@ USE smdc;
 -- 用户表
 CREATE TABLE IF NOT EXISTS `user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `open_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '微信openid',
-  `nickname` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '昵称',
+  `open_id` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '微信openid',
+  `session_key` varchar(255) DEFAULT NULL COMMENT '会话密钥',
+  `nick_name` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '昵称',
+  `username` varchar(50) DEFAULT NULL COMMENT '用户名',
+  `password` varchar(255) DEFAULT NULL COMMENT '密码',
   `avatar_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '头像',
+  `gender` tinyint(2) DEFAULT '0' COMMENT '性别 0-未知 1-男 2-女',
+  `city` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '城市',
+  `province` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '省份',
+  `country` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '国家',
   `phone` varchar(11) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '手机号',
+  `last_login_time` datetime DEFAULT NULL COMMENT '最后登录时间',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_openid` (`open_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=10000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户';
+
+-- 添加测试用户
+INSERT INTO `user` (`id`, `nick_name`, `avatar_url`, `gender`, `city`, `province`, `country`, `phone`, `session_key`, `username`, `password`, `last_login_time`, `create_time`, `update_time`) 
+VALUES (9999, '测试用户', '/images/default-avatar.png', 1, '广州', '广东', '中国', '13800138000', 'init_session_key', 'test', '123456', NOW(), NOW(), NOW());
 
 -- 员工表
 CREATE TABLE IF NOT EXISTS `employee` (
@@ -33,6 +44,10 @@ CREATE TABLE IF NOT EXISTS `employee` (
 -- 初始化管理员账号，密码为123456的MD5值
 INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `create_time`, `update_time`) 
 VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 1, NOW(), NOW());
+
+-- 添加测试账号，密码为123456的MD5值
+INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `phone`, `create_time`, `update_time`) 
+VALUES (2, 'test', 'e10adc3949ba59abbe56e057f20f883e', '测试账号', 2, '13800138000', NOW(), NOW());
 
 -- 分类表
 CREATE TABLE IF NOT EXISTS `category` (
@@ -115,4 +130,24 @@ CREATE TABLE IF NOT EXISTS `order_detail` (
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_order_id` (`order_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单明细表'; 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单明细表';
+
+-- 店铺信息表
+CREATE TABLE `shop_info` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '店铺名称',
+  `slogan` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '店铺标语',
+  `logo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '店铺logo',
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '店铺地址',
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '联系电话',
+  `business_hours` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '营业时间',
+  `longitude` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '经度',
+  `latitude` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '纬度',
+  `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态，0关闭，1营业中',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='店铺信息表';
+
+-- 插入默认店铺数据
+INSERT INTO `shop_info` (`id`, `name`, `slogan`, `status`) VALUES (1, '智能点餐系统', '便捷、高效、美味', 1); 

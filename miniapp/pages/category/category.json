@@ -1,6 +1,8 @@
 {
   "navigationBarTitleText": "菜品分类",
   "enablePullDownRefresh": true,
+  "navigationBarBackgroundColor": "#FF5722",
+  "navigationBarTextStyle": "white",
   "usingComponents": {
     "cart-bar": "/components/cart-bar/cart-bar"
   }

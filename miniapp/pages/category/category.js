@@ -2,8 +2,10 @@
 const app = getApp();
 const request = require('../../utils/request');
 const cartUtil = require('../../utils/cart');
+const auth = require('../../utils/auth');
 
-Page({
+// 使用登录验证混入
+Page(auth.pageAuthMixin({
   /**
    * 页面的初始数据
    */
@@ -13,6 +15,7 @@ Page({
     currentCategory: null, // 当前选中的分类
     scrollTop: 0, // 右侧菜品列表滚动位置
     tableId: null, // 桌位ID
+    hasTableId: false, // 是否有桌位ID
     isLoading: false // 加载状态
   },
 
@@ -20,13 +23,40 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    // 获取桌位信息
-    this.setData({
-      tableId: app.globalData.tableId
-    });
+    console.log('分类页面加载，接收参数:', options);
+    
+    // 从options中获取桌号信息，如果存在则优先使用
+    if (options && options.tableId) {
+      app.globalData.tableId = options.tableId;
+      console.log('从URL参数获取桌号:', options.tableId);
+    }
+    
+    this.initTableInfo();
     
     // 加载分类列表
     this.loadCategories();
+  },
+  
+  /**
+   * 初始化桌号信息
+   */
+  initTableInfo() {
+    // 从全局数据获取桌位ID
+    const globalTableId = app.globalData.tableId;
+    
+    if (globalTableId) {
+      this.setData({
+        tableId: globalTableId,
+        hasTableId: true
+      });
+      console.log('桌号信息初始化成功:', globalTableId);
+    } else {
+      this.setData({
+        tableId: null,
+        hasTableId: false
+      });
+      console.log('无桌号信息，使用默认点餐模式');
+    }
   },
   
   /**
@@ -144,11 +174,33 @@ Page({
   },
   
   /**
-   * 生命周期函数--监听页面显示
+   * 页面显示时检查登录状态
    */
   onShow: function () {
+    // 检查登录状态
+    auth.validateLogin();
+    
+    // 每次页面显示时更新桌号信息
+    this.initTableInfo();
+    
     // 更新购物车状态
     this.updateCart();
+    
+    console.log('点餐页面显示，当前桌号:', this.data.tableId || '无桌号');
+
+    // 添加页面标题
+    wx.setNavigationBarTitle({
+      title: this.data.hasTableId ? '点餐 (桌号:' + this.data.tableId + ')' : '点餐'
+    });
+  },
+  
+  /**
+   * 返回首页
+   */
+  backToHome: function() {
+    wx.reLaunch({
+      url: '/pages/index/index'
+    });
   },
   
   /**
@@ -169,4 +221,4 @@ Page({
       path: '/pages/category/category'
     };
   }
-}) 
+})) 

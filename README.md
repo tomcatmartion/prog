@@ -16,3 +16,5 @@
 + 根目录：JAVA SpringBoot后端（[Readme.md](server.md)）
 + 开发流程：[开放流程.md](开发流程.md)
 + Cursor Rule：[.cursorrules](.cursorrules)
++ Chrome MCP：https://browsertools.agentdesk.ai/installation
++ Chrome MCP命令：npx @agentdeskai/browser-tools-server@1.2.0

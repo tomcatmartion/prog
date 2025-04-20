@@ -1,5 +1,5 @@
 /* 主题色变量定义 */
-:root {
+page {
   /* 主题颜色 */
   --primary-color: #FF5722;
   --primary-color-light: #FFCCBC;

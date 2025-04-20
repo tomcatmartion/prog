@@ -60,6 +60,14 @@ button.button-hover {
   opacity: 0.8;
 }
 
+button.login-btn {
+  background-color: #FF5722;
+  color: #FFFFFF;
+  line-height: 88rpx;
+  font-weight: bold;
+  border-radius: 44rpx;
+}
+
 /* 底部安全区适配 */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);

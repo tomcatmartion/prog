@@ -1,0 +1,59 @@
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <view class="title">扫码点餐小程序</view>
+    <view class="subtitle">欢迎使用我们的服务</view>
+  </view>
+  
+  <view class="login-box">
+    <view wx:if="{{!loginStatus}}">
+      <view class="tabs">
+        <view class="tab {{loginType === 'wx' ? 'active' : ''}}" bindtap="switchTab" data-type="wx">微信登录</view>
+        <view class="tab {{loginType === 'account' ? 'active' : ''}}" bindtap="switchTab" data-type="account">账号登录</view>
+      </view>
+      
+      <!-- 微信登录 -->
+      <view wx:if="{{loginType === 'wx'}}">
+        <view class="tips">请登录后使用更多功能</view>
+        
+        <!-- 使用新接口 getUserProfile -->
+        <button wx:if="{{canIUseGetUserProfile}}" 
+                class="login-btn primary-btn" 
+                bindtap="getUserProfile">
+          微信一键登录
+        </button>
+      </view>
+      
+      <!-- 账号登录 -->
+      <view wx:else>
+        <view class="form-item">
+          <input class="input" type="text" placeholder="请输入用户名" bindinput="onUsernameInput" value="{{username}}" />
+        </view>
+        <view class="form-item">
+          <input class="input" password="true" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+        </view>
+        <button class="login-btn primary-btn" bindtap="accountLogin">账号登录</button>
+        
+        <view class="test-account">
+          <text>测试账号: test</text>
+          <text>测试密码: 123456</text>
+        </view>
+      </view>
+    </view>
+    
+    <view wx:else class="user-info">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="nickname">{{userInfo.nickName || '尊贵的用户'}}</view>
+      <view class="login-success">登录成功，正在进入...</view>
+      <view class="loading-dots">
+        <text>.</text>
+        <text>.</text>
+        <text>.</text>
+      </view>
+    </view>
+  </view>
+  
+  <view class="footer">
+    <view class="copyright">© 2023 扫码点餐系统 版权所有</view>
+  </view>
+</view> 

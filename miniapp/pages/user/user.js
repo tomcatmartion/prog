@@ -1,6 +1,8 @@
 import { request } from '../../utils/request.js';
+const app = getApp();
+const auth = require('../../utils/auth');
 
-Page({
+Page(auth.pageAuthMixin({
   /**
    * 页面的初始数据
    */
@@ -40,7 +42,13 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-    this.getUserInfo();
+    // 检查登录状态
+    auth.validateLogin();
+    
+    // 更新用户信息
+    this.setData({
+      userInfo: app.globalData.userInfo
+    });
   },
 
   /**
@@ -117,17 +125,16 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          wx.removeStorageSync('token');
-          this.setData({
-            userInfo: null,
-            isLogin: false
-          });
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success'
+          // 清除本地存储的用户信息
+          wx.removeStorageSync('userId');
+          app.globalData.userInfo = null;
+          
+          // 跳转到登录页面
+          wx.reLaunch({
+            url: '/pages/login/login'
           });
         }
       }
     });
   }
-}); 
+})); 

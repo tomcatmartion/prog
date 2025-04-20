@@ -18,6 +18,13 @@ public interface EmployeeService extends IService<Employee> {
     Employee login(String username, String password);
 
     /**
+     * 根据用户名查询员工
+     * @param username 用户名
+     * @return 员工信息
+     */
+    Employee getByUsername(String username);
+
+    /**
      * 分页查询
      * @param page 页码
      * @param pageSize 每页记录数

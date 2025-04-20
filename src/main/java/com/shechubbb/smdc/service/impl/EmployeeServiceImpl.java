@@ -142,4 +142,18 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         employee.setUpdateTime(LocalDateTime.now());
         updateById(employee);
     }
+
+    /**
+     * 根据用户名查询员工
+     * @param username 用户名
+     * @return 员工信息
+     */
+    @Override
+    public Employee getByUsername(String username) {
+        // 构建查询条件
+        LambdaQueryWrapper<Employee> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Employee::getUsername, username);
+        // 执行查询
+        return getOne(queryWrapper);
+    }
 } 

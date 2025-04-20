@@ -1,8 +1,10 @@
 // pages/cart/cart.js
 const app = getApp();
 const cartUtil = require('../../utils/cart');
+const auth = require('../../utils/auth');
 
-Page({
+// 使用登录验证混入
+Page(auth.pageAuthMixin({
   /**
    * 页面的初始数据
    */
@@ -28,6 +30,9 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
+    // 检查登录状态
+    auth.validateLogin();
+    
     this.updateCart();
   },
   
@@ -248,4 +253,4 @@ Page({
       url: '/pages/order/confirm/confirm?tableId=' + this.data.tableId + '&selected=' + JSON.stringify(this.data.selectedItems)
     });
   }
-}) 
+})) 

@@ -1,5 +1,17 @@
 <!-- pages/category/category.wxml -->
 <view class="container">
+  <!-- 桌号信息显示 -->
+  <view class="table-info" wx:if="{{hasTableId}}">
+    <view class="table-id">桌号: {{tableId}}</view>
+  </view>
+
+  <!-- 顶部工具栏 -->
+  <view class="toolbar">
+    <view class="back-btn" bindtap="backToHome">
+      <text>回到首页</text>
+    </view>
+  </view>
+
   <!-- 分类与菜品列表 -->
   <view class="menu-container">
     <!-- 左侧分类列表 -->

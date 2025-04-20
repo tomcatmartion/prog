@@ -229,7 +229,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 查询用户信息
         User user = userService.getById(order.getUserId());
         if (user != null) {
-            orderVO.setUserName(user.getNickname());
+            orderVO.setUserName(user.getNickName());
         }
         
         // 查询桌位信息
@@ -313,7 +313,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 查询用户信息
             User user = userService.getById(order.getUserId());
             if (user != null) {
-                orderVO.setUserName(user.getNickname());
+                orderVO.setUserName(user.getNickName());
             }
             
             // 查询桌位信息
