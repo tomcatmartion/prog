@@ -7,7 +7,7 @@ import request from '@/utils/request'
  */
 export function getDishList(query) {
   return request({
-    url: '/admin/dish/list',
+    url: '/admin/dish/page',
     method: 'get',
     params: query
   })
@@ -20,7 +20,7 @@ export function getDishList(query) {
  */
 export function getDishDetail(id) {
   return request({
-    url: `/admin/dish/detail/${id}`,
+    url: `/admin/dish/info/${id}`,
     method: 'get'
   })
 }

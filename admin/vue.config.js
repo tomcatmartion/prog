@@ -1,0 +1,17 @@
+module.exports = {
+  devServer: {
+    port: 8081,
+    proxy: {
+      '/admin': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        ws: true
+      },
+      '/upload': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
+  },
+  lintOnSave: false
+} 

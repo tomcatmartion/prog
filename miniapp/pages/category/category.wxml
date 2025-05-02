@@ -41,11 +41,11 @@
       </view>
       
       <!-- 空状态提示 -->
-      <view class="empty-state" wx:if="{{!categoryList.length || !dishList.length}}">
+      <view class="empty-state" wx:if="{{!categories.length || !dishes.length}}">
         <view class="empty-icon">
           <icon type="info" size="45" color="#cccccc"/>
         </view>
-        <view class="empty-text">{{!categoryList.length ? '暂无分类信息' : '暂无菜品信息'}}</view>
+        <view class="empty-text">{{!categories.length ? '暂无分类信息' : '暂无菜品信息'}}</view>
       </view>
       
       <!-- 菜品列表 -->
@@ -70,4 +70,40 @@
   
   <!-- 购物车组件 -->
   <cart-bar id="cartBar" table-id="{{tableId}}"></cart-bar>
-</view> 
+  
+  <!-- 规格选择对话框 -->
+  <view class="spec-dialog-mask" wx:if="{{showSpecDialog}}" bindtap="closeSpecDialog">
+    <view class="spec-dialog" catchtap="stopEvent">
+      <view class="spec-dialog-header">
+        <view class="spec-dialog-title">{{currentDish.name}}</view>
+        <view class="spec-dialog-close" bindtap="closeSpecDialog">×</view>
+      </view>
+      <view class="spec-dialog-content">
+        <view class="spec-dialog-subtitle">请选择规格</view>
+        <view class="spec-list">
+          <view 
+            class="spec-item {{selectedSpecIndex === index ? 'active' : ''}}" 
+            wx:for="{{currentDish.specifications}}" 
+            wx:key="id"
+            bindtap="selectSpecification"
+            data-index="{{index}}"
+          >
+            <view class="spec-name">{{item.name}}</view>
+            <view class="spec-price">¥{{item.price}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="spec-dialog-footer">
+        <button class="add-cart-btn" bindtap="confirmAddToCart">加入购物车</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 防止事件冒泡的辅助函数 -->
+<wxs module="stopEvent">
+module.exports = function(e) {
+  e.stopPropagation();
+  return false;
+}
+</wxs> 

@@ -24,7 +24,16 @@ public class MiniDishController {
      * 根据分类ID获取菜品列表
      */
     @GetMapping("/list/{categoryId}")
-    public Result<List<DishVO>> list(@PathVariable Long categoryId) {
+    public Result<List<DishVO>> listByPath(@PathVariable Long categoryId) {
+        List<DishVO> list = dishService.listByCategoryId(categoryId);
+        return Result.success(list);
+    }
+
+    /**
+     * 根据分类ID获取菜品列表 (支持请求参数方式)
+     */
+    @GetMapping("/list")
+    public Result<List<DishVO>> list(@RequestParam(value = "categoryId") Long categoryId) {
         List<DishVO> list = dishService.listByCategoryId(categoryId);
         return Result.success(list);
     }

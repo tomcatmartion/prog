@@ -10,6 +10,11 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+  # 配置文件上传
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
 
 mybatis-plus:
   configuration:
@@ -27,4 +32,9 @@ wx:
     secret: 你的小程序secret
     token: 你的token
     aesKey: 你的aesKey
-    msgDataFormat: JSON 
+    msgDataFormat: JSON
+
+# 自定义配置
+smdc:
+  upload-path: ${user.dir}/upload
+  base-url: http://192.168.31.12:8080 # 配置服务器基础URL，用于图片等资源的完整路径 

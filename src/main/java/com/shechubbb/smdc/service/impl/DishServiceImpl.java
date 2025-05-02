@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shechubbb.smdc.common.exception.BusinessException;
+import com.shechubbb.smdc.config.ImageConfig;
 import com.shechubbb.smdc.entity.Category;
 import com.shechubbb.smdc.entity.Dish;
 import com.shechubbb.smdc.entity.Specification;
@@ -34,6 +35,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Autowired
     private SpecificationService specificationService;
+    
+    @Autowired
+    private ImageConfig.ImageUrlConverter imageUrlConverter;
 
     /**
      * 分页查询
@@ -69,6 +73,15 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             if (category != null) {
                 dishVO.setCategoryName(category.getName());
             }
+            
+            // 设置完整图片URL
+            if (StringUtils.isNotBlank(dishVO.getImage())) {
+                dishVO.setImage(imageUrlConverter.getFullImageUrl(dishVO.getImage()));
+            }
+            
+            // 查询规格信息
+            List<Specification> specifications = specificationService.listByDishId(dish.getId());
+            dishVO.setSpecifications(specifications);
             
             return dishVO;
         }).collect(Collectors.toList());
@@ -166,6 +179,11 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             DishVO dishVO = new DishVO();
             BeanUtils.copyProperties(dish, dishVO);
             
+            // 设置完整图片URL
+            if (StringUtils.isNotBlank(dishVO.getImage())) {
+                dishVO.setImage(imageUrlConverter.getFullImageUrl(dishVO.getImage()));
+            }
+            
             // 查询规格信息
             List<Specification> specifications = specificationService.listByDishId(dish.getId());
             dishVO.setSpecifications(specifications);
@@ -190,6 +208,11 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         // 转换为DishVO
         DishVO dishVO = new DishVO();
         BeanUtils.copyProperties(dish, dishVO);
+        
+        // 设置完整图片URL
+        if (StringUtils.isNotBlank(dishVO.getImage())) {
+            dishVO.setImage(imageUrlConverter.getFullImageUrl(dishVO.getImage()));
+        }
         
         // 查询规格信息
         List<Specification> specifications = specificationService.listByDishId(id);

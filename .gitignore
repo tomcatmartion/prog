@@ -105,3 +105,6 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+
+#上传目录
+/upload/

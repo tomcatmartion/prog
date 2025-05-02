@@ -116,7 +116,7 @@
     </div>
 
     <!-- 新增/编辑菜品对话框 -->
-    <el-dialog :title="dialogStatus === 'create' ? '新增菜品' : '编辑菜品'" :visible.sync="dialogFormVisible">
+    <el-dialog :title="dialogStatus === 'create' ? '新增菜品' : '编辑菜品'" :visible.sync="dialogFormVisible" width="50%">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px">
         <el-form-item label="菜品名称" prop="name">
           <el-input v-model="temp.name" placeholder="请输入菜品名称"></el-input>
@@ -137,7 +137,7 @@
         <el-form-item label="菜品图片">
           <el-upload
             class="avatar-uploader"
-            action="/admin/file/upload"
+            action="/admin/upload/image"
             :headers="uploadHeaders"
             :show-file-list="false"
             :on-success="handleUploadSuccess"
@@ -155,6 +155,29 @@
             <el-radio :label="0">停售</el-radio>
           </el-radio-group>
         </el-form-item>
+        
+        <!-- 规格信息 -->
+        <el-divider content-position="left">规格信息</el-divider>
+        <div>
+          <el-button type="primary" size="small" @click="addSpecification" style="margin-bottom: 10px;">添加规格</el-button>
+          <el-table :data="temp.specifications" border style="width: 100%">
+            <el-table-column label="规格名称" prop="name">
+              <template slot-scope="scope">
+                <el-input v-model="scope.row.name" placeholder="请输入规格名称"></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column label="价格" width="150">
+              <template slot-scope="scope">
+                <el-input-number v-model="scope.row.price" :precision="2" :step="0.1" :min="0" controls-position="right"></el-input-number>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80" align="center">
+              <template slot-scope="scope">
+                <el-button type="danger" icon="el-icon-delete" size="mini" circle @click.stop="removeSpecification(scope.$index)"></el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取消</el-button>
@@ -193,7 +216,8 @@ export default {
         price: 0,
         image: '',
         description: '',
-        status: 1
+        status: 1,
+        specifications: []
       },
       rules: {
         name: [{ required: true, message: '请输入菜品名称', trigger: 'blur' }],
@@ -264,7 +288,8 @@ export default {
         price: 0,
         image: '',
         description: '',
-        status: 1
+        status: 1,
+        specifications: []
       }
     },
     handleAdd() {
@@ -277,11 +302,26 @@ export default {
     },
     handleEdit(row) {
       this.temp = Object.assign({}, row)
+      // 确保specifications字段存在
+      if (!this.temp.specifications) {
+        this.temp.specifications = []
+      }
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
+    },
+    // 添加规格
+    addSpecification() {
+      this.temp.specifications.push({
+        name: '',
+        price: 0
+      })
+    },
+    // 删除规格
+    removeSpecification(index) {
+      this.temp.specifications.splice(index, 1)
     },
     async createData() {
       this.$refs['dataForm'].validate(async (valid) => {
@@ -366,9 +406,10 @@ export default {
     },
     handleUploadSuccess(res, file) {
       if (res.code === 1) {
-        this.temp.image = res.data
+        this.temp.image = res.data;
+        this.$message.success('上传成功');
       } else {
-        this.$message.error('上传失败')
+        this.$message.error('上传失败');
       }
     },
     beforeUpload(file) {
@@ -434,5 +475,9 @@ export default {
   width: 150px;
   height: 150px;
   display: block;
+}
+
+.el-divider {
+  margin: 24px 0;
 }
 </style> 

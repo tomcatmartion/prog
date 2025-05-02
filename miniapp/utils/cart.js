@@ -2,12 +2,20 @@
 const app = getApp();
 
 // 添加到购物车
-const addToCart = (dish, specificationId = null, quantity = 1) => {
+const addToCart = (dish, quantity = 1) => {
   const cartList = app.globalData.cartList || [];
+  
+  // 获取规格信息
+  const selectedSpec = dish.selectedSpecification;
+  const specificationId = selectedSpec ? selectedSpec.id : null;
+  const specificationName = selectedSpec ? selectedSpec.name : null;
+  const price = selectedSpec ? selectedSpec.price : dish.price;
   
   // 查找购物车中是否已存在该菜品（同一规格）
   const index = cartList.findIndex(item => {
-    return item.id === dish.id && item.specificationId === specificationId;
+    return item.id === dish.id && 
+           ((!item.specificationId && !specificationId) || 
+            (item.specificationId === specificationId));
   });
   
   if (index > -1) {
@@ -18,10 +26,10 @@ const addToCart = (dish, specificationId = null, quantity = 1) => {
     cartList.push({
       id: dish.id,
       name: dish.name,
-      price: dish.price,
+      price: price,
       image: dish.image,
       specificationId: specificationId,
-      specificationName: specificationId ? getSpecificationName(specificationId, dish) : null,
+      specificationName: specificationName,
       quantity: quantity
     });
   }
@@ -44,7 +52,9 @@ const removeFromCart = (dishId, specificationId = null) => {
   
   // 查找购物车中的菜品
   const index = cartList.findIndex(item => {
-    return item.id === dishId && item.specificationId === specificationId;
+    return item.id === dishId && 
+           ((!item.specificationId && !specificationId) || 
+            (item.specificationId === specificationId));
   });
   
   if (index > -1) {
@@ -64,7 +74,9 @@ const updateQuantity = (dishId, specificationId = null, quantity = 1) => {
   
   // 查找购物车中的菜品
   const index = cartList.findIndex(item => {
-    return item.id === dishId && item.specificationId === specificationId;
+    return item.id === dishId && 
+           ((!item.specificationId && !specificationId) || 
+            (item.specificationId === specificationId));
   });
   
   if (index > -1) {
@@ -104,16 +116,6 @@ const getTotalQuantity = () => {
 const getTotalAmount = () => {
   const cartList = app.globalData.cartList || [];
   return cartList.reduce((total, item) => total + item.price * item.quantity, 0);
-};
-
-// 获取规格名称
-const getSpecificationName = (specificationId, dish) => {
-  if (!dish.specifications || !Array.isArray(dish.specifications)) {
-    return '';
-  }
-  
-  const specification = dish.specifications.find(spec => spec.id === specificationId);
-  return specification ? specification.name : '';
 };
 
 module.exports = {

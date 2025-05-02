@@ -18,3 +18,4 @@
 + Cursor Rule：[.cursorrules](.cursorrules)
 + Chrome MCP：https://browsertools.agentdesk.ai/installation
 + Chrome MCP命令：npx @agentdeskai/browser-tools-server@1.2.0
++ npm切换镜像源：npm config set registry https://registry.npmmirror.com
