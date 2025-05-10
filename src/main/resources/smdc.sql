@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `order` (
   `user_id` bigint(20) NOT NULL COMMENT '用户id',
   `table_id` bigint(20) NOT NULL COMMENT '桌位id',
   `amount` decimal(10,2) NOT NULL COMMENT '总金额',
-  `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '订单状态 1:待付款 2:待接单 3:待上菜 4:已完成 5:已取消',
+  `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '订单状态 1:待付款 2:已支付 3:已完成 4:已取消',
   `pay_method` tinyint(4) DEFAULT NULL COMMENT '支付方式 1:微信支付 2:支付宝支付',
   `pay_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '支付状态 0:未支付 1:已支付',
   `remark` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',

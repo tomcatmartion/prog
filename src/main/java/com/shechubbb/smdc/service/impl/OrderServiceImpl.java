@@ -3,6 +3,9 @@ package com.shechubbb.smdc.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shechubbb.smdc.common.constant.OrderStatusConstant;
+import com.shechubbb.smdc.common.constant.PayMethodConstant;
+import com.shechubbb.smdc.common.constant.PayStatusConstant;
 import com.shechubbb.smdc.common.exception.BusinessException;
 import com.shechubbb.smdc.entity.Order;
 import com.shechubbb.smdc.entity.OrderDetail;
@@ -49,10 +52,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional
     public Long createOrder(OrderVO orderVO) {
-        // 查询桌位
-        TableInfo tableInfo = tableInfoService.getById(orderVO.getTableId());
-        if (tableInfo == null) {
-            throw new BusinessException("桌位不存在");
+        // 检查必要参数
+        if (orderVO.getUserId() == null) {
+            throw new BusinessException("用户ID不能为空");
+        }
+        
+        // 检查桌位(如果提供了桌位ID)
+        if (orderVO.getTableId() != null) {
+            TableInfo tableInfo = tableInfoService.getById(orderVO.getTableId());
+            if (tableInfo == null) {
+                throw new BusinessException("桌位不存在");
+            }
+            
+            // 更新桌位状态
+            tableInfo.setStatus(1); // 使用中
+            tableInfo.setUpdateTime(LocalDateTime.now());
+            tableInfoService.updateById(tableInfo);
         }
         
         // 设置订单基本信息
@@ -64,8 +79,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setNumber(number);
         
         // 设置订单状态
-        order.setStatus(1); // 1待付款
-        order.setPayStatus(0); // 0未支付
+        order.setStatus(OrderStatusConstant.PENDING_PAYMENT);
+        order.setPayStatus(PayStatusConstant.UNPAID);
         
         // 设置创建时间
         order.setCreateTime(LocalDateTime.now());
@@ -82,11 +97,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }).collect(Collectors.toList());
         
         orderDetailService.saveBatch(orderDetails, order.getId());
-        
-        // 更新桌位状态
-        tableInfo.setStatus(1); // 使用中
-        tableInfo.setUpdateTime(LocalDateTime.now());
-        tableInfoService.updateById(tableInfo);
         
         return order.getId();
     }
@@ -106,14 +116,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 检查订单状态
-        if (order.getStatus() != 1) {
+        if (order.getStatus() != OrderStatusConstant.PENDING_PAYMENT) {
             throw new BusinessException("订单状态异常，不能支付");
         }
         
         // 更新订单状态
-        order.setStatus(2); // 2待接单
+        order.setStatus(OrderStatusConstant.PAID);
         order.setPayMethod(payMethod);
-        order.setPayStatus(1); // 1已支付
+        order.setPayStatus(PayStatusConstant.PAID);
         order.setUpdateTime(LocalDateTime.now());
         
         updateById(order);
@@ -133,22 +143,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 检查订单状态
-        if (order.getStatus() == 4 || order.getStatus() == 5) {
+        if (order.getStatus() == OrderStatusConstant.COMPLETED || order.getStatus() == OrderStatusConstant.CANCELLED) {
             throw new BusinessException("订单已完成或已取消，不能取消");
         }
         
         // 更新订单状态
-        order.setStatus(5); // 5已取消
+        order.setStatus(OrderStatusConstant.CANCELLED);
         order.setUpdateTime(LocalDateTime.now());
         
         updateById(order);
         
-        // 更新桌位状态
-        TableInfo tableInfo = tableInfoService.getById(order.getTableId());
-        if (tableInfo != null) {
-            tableInfo.setStatus(0); // 空闲
-            tableInfo.setUpdateTime(LocalDateTime.now());
-            tableInfoService.updateById(tableInfo);
+        // 更新桌位状态(如果有桌位)
+        if (order.getTableId() != null) {
+            TableInfo tableInfo = tableInfoService.getById(order.getTableId());
+            if (tableInfo != null) {
+                tableInfo.setStatus(0); // 空闲
+                tableInfo.setUpdateTime(LocalDateTime.now());
+                tableInfoService.updateById(tableInfo);
+            }
         }
     }
 
@@ -165,12 +177,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 检查订单状态
-        if (order.getStatus() != 2) {
+        if (order.getStatus() != OrderStatusConstant.PAID) {
             throw new BusinessException("订单状态异常，不能接单");
         }
         
-        // 更新订单状态
-        order.setStatus(3); // 3待上菜
+        // 更新订单时间
         order.setUpdateTime(LocalDateTime.now());
         
         updateById(order);
@@ -190,12 +201,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 检查订单状态
-        if (order.getStatus() != 3) {
+        if (order.getStatus() != OrderStatusConstant.PAID) {
             throw new BusinessException("订单状态异常，不能完成");
         }
         
         // 更新订单状态
-        order.setStatus(4); // 4已完成
+        order.setStatus(OrderStatusConstant.COMPLETED);
         order.setUpdateTime(LocalDateTime.now());
         
         updateById(order);
@@ -250,16 +261,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * @param page 页码
      * @param pageSize 每页记录数
      * @param userId 用户ID
+     * @param status 订单状态(可选)
      * @return 分页数据
      */
     @Override
-    public Page<OrderVO> userPage(int page, int pageSize, Long userId) {
+    public Page<OrderVO> userPage(int page, int pageSize, Long userId, Integer status) {
         // 创建分页对象
         Page<Order> pageInfo = new Page<>(page, pageSize);
         
         // 构造查询条件
         LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Order::getUserId, userId);
+        // 如果status不为空，则添加状态筛选条件
+        queryWrapper.eq(status != null, Order::getStatus, status);
         queryWrapper.orderByDesc(Order::getCreateTime);
         
         // 执行查询
@@ -339,5 +353,27 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String randomNum = String.valueOf((int)((Math.random() * 9 + 1) * 100000));
         return timestamp + randomNum;
+    }
+    
+    /**
+     * 验证订单归属权，确保用户只能操作自己的订单
+     * @param orderId 订单ID
+     * @param userId 用户ID
+     * @return 是否有权操作此订单
+     */
+    @Override
+    public boolean verifyOrderOwner(Long orderId, Long userId) {
+        if (orderId == null || userId == null) {
+            return false;
+        }
+        
+        // 查询订单
+        Order order = getById(orderId);
+        if (order == null) {
+            return false;
+        }
+        
+        // 验证用户ID是否匹配
+        return order.getUserId().equals(userId);
     }
 } 

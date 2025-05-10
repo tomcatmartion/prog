@@ -1,7 +1,7 @@
 <!-- pages/order/confirm/confirm.wxml -->
 <view class="container">
   <!-- 桌位信息 -->
-  <view class="section table-info">
+  <view class="section table-info" wx:if="{{tableId}}">
     <view class="section-title">桌位信息</view>
     <view class="table-content">
       <view class="table-name">{{tableName}}</view>
@@ -35,18 +35,12 @@
   <view class="section payment-method">
     <view class="section-title">支付方式</view>
     <view class="payment-list">
-      <view 
-        class="payment-item {{item.selected ? 'active' : ''}}" 
-        wx:for="{{payMethods}}" 
-        wx:key="id"
-        bindtap="selectPayMethod"
-        data-id="{{item.id}}"
-      >
+      <view class="payment-item active">
         <view class="payment-left">
-          <icon type="success" size="24" color="#FF5722" class="payment-icon"/>
-          <text>{{item.name}}</text>
+          <image src="/images/wxpay.png" class="payment-icon" mode="aspectFit"></image>
+          <text>微信支付</text>
         </view>
-        <icon type="success" size="20" color="#FF5722" wx:if="{{item.selected}}"></icon>
+        <icon type="success" size="20" color="#FF5722"></icon>
       </view>
     </view>
   </view>

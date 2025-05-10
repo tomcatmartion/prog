@@ -6,6 +6,8 @@
     "pages/dish/dish",
     "pages/cart/cart",
     "pages/order/list/list",
+    "pages/order/confirm/confirm",
+    "pages/order/detail/detail",
     "pages/user/user"
   ],
   "window": {

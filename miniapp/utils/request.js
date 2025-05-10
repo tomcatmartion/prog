@@ -3,10 +3,14 @@ const getAppInstance = () => {
   return getApp();
 };
 
-// 导入配置
+// 导入配置和工具
 const config = require('../config/config');
+const auth = require('./auth');
 
 // 网络请求工具类
+
+// 防抖：记录最后一次登录跳转的时间戳
+let lastLoginRedirectTime = 0;
 
 // 正在执行登录刷新的标记
 let isRefreshing = false;
@@ -46,10 +50,11 @@ const refreshLogin = () => {
             },
             success: (res) => {
               if (res.data.code === 1 && res.data.data) {
-                // 更新存储的用户信息
-                app.globalData.userInfo = res.data.data;
+                // 更新存储的用户信息和Token
+                app.globalData.userInfo = res.data.data.user;
                 app.globalData.isLoggedIn = true;
-                wx.setStorageSync('userId', res.data.data.id);
+                auth.setToken(res.data.data.token);
+                wx.setStorageSync('userId', res.data.data.user.id); // 兼容旧版，可以逐步移除
                 
                 // 处理队列中的请求
                 waitQueue.forEach(task => {
@@ -59,7 +64,8 @@ const refreshLogin = () => {
                 resolve();
               } else {
                 // 刷新失败，清除登录信息
-                wx.removeStorageSync('userId');
+                auth.clearToken();
+                wx.removeStorageSync('userId'); // 兼容旧版，可以逐步移除
                 app.globalData.userInfo = null;
                 app.globalData.isLoggedIn = false;
                 
@@ -169,15 +175,21 @@ const request = (url, method, data, showLoading = true) => {
       });
     }
     
-    // 获取用户ID
-    const userId = wx.getStorageSync('userId');
+    // 获取JWT令牌
+    const token = auth.getToken();
     
     // 设置请求头
     const header = {
       'content-type': 'application/json'
     };
     
-    // 如果有用户ID，则添加到请求头中
+    // 如果有令牌，则添加到请求头中
+    if (token) {
+      header['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // 添加用户ID到请求头，兼容旧版，可以在后续更新中移除
+    const userId = wx.getStorageSync('userId');
     if (userId) {
       header['X-User-Id'] = userId;
     }
@@ -205,16 +217,44 @@ const request = (url, method, data, showLoading = true) => {
                   // 业务层面的成功与失败处理
                   if (res.data.code === 1) {
                     resolve(res.data);
-                  } else if (res.data.code === -1) { // 未登录或token过期
+                  } else if (res.statusCode === 401 || res.data.code === -1) { // 未登录或token过期
+                    console.warn('认证失败，清除登录信息');
                     // 清除登录信息
-                    wx.removeStorageSync('userId');
+                    auth.clearToken();
+                    wx.removeStorageSync('userId'); // 兼容旧版，可以逐步移除
                     app.globalData.userInfo = null;
                     app.globalData.isLoggedIn = false;
                     
-                    // 跳转到登录页面
-                    wx.redirectTo({
-                      url: '/pages/login/login'
-                    });
+                    // 防抖：检查上次跳转时间，避免频繁跳转
+                    const now = Date.now();
+                    if (now - lastLoginRedirectTime < 3000) {
+                      console.log('短时间内已有跳转到登录页的请求，忽略此次跳转');
+                      return reject(res.data);
+                    }
+                    
+                    // 更新最后跳转时间
+                    lastLoginRedirectTime = now;
+                    
+                    // 跳转到登录页面 - 增加延迟
+                    setTimeout(() => {
+                      const pages = getCurrentPages();
+                      const currentPage = pages.length > 0 ? pages[pages.length - 1].route : '';
+                      
+                      // 如果当前不在登录页，才进行跳转
+                      if (currentPage !== 'pages/login/login') {
+                        console.log('认证失败，跳转到登录页');
+                        wx.reLaunch({
+                          url: '/pages/login/login',
+                          fail: (error) => {
+                            console.error('reLaunch到登录页失败:', error);
+                            // 备用方案
+                            wx.redirectTo({
+                              url: '/pages/login/login'
+                            });
+                          }
+                        });
+                      }
+                    }, 500);
                     
                     reject(res.data);
                   } else {
@@ -227,6 +267,44 @@ const request = (url, method, data, showLoading = true) => {
                     // 将完整的错误信息传递给调用者，便于显示错误信息
                     reject(res.data);
                   }
+                } else if (res.statusCode === 401) {
+                  // 未授权，清除登录信息并跳转到登录页
+                  console.warn('401未授权，清除登录信息');
+                  auth.clearToken();
+                  wx.removeStorageSync('userId'); // 兼容旧版，可以逐步移除
+                  app.globalData.userInfo = null;
+                  app.globalData.isLoggedIn = false;
+                  
+                  // 与上面类似的防抖处理
+                  const now = Date.now();
+                  if (now - lastLoginRedirectTime < 3000) {
+                    console.log('短时间内已有跳转到登录页的请求，忽略此次跳转');
+                    return reject({ code: 401, msg: '未登录或登录已过期' });
+                  }
+                  
+                  // 更新最后跳转时间
+                  lastLoginRedirectTime = now;
+                  
+                  setTimeout(() => {
+                    const pages = getCurrentPages();
+                    const currentPage = pages.length > 0 ? pages[pages.length - 1].route : '';
+                    
+                    // 如果当前不在登录页，才进行跳转
+                    if (currentPage !== 'pages/login/login') {
+                      console.log('401未授权，跳转到登录页');
+                      wx.reLaunch({
+                        url: '/pages/login/login',
+                        fail: (error) => {
+                          console.error('reLaunch到登录页失败:', error);
+                          wx.redirectTo({
+                            url: '/pages/login/login'
+                          });
+                        }
+                      });
+                    }
+                  }, 500);
+                  
+                  reject({ code: 401, msg: '未登录或登录已过期' });
                 } else {
                   // HTTP异常
                   wx.showToast({
@@ -251,100 +329,40 @@ const request = (url, method, data, showLoading = true) => {
                   wx.hideLoading();
                 }
                 
-                console.error(`【错误】请求失败：${method} ${fullUrl}`, err);
+                console.error(`【错误】请求失败`, err);
                 
-                // 如果是localhost失败并且有备用URL，尝试使用备用URL重新请求
-                if (retry && fullUrl.includes('localhost') && app.globalData.alternateBaseUrl) {
-                  console.log('尝试使用本地IP地址重新请求...');
-                  // 标记使用备用URL
-                  wx.setStorageSync('useAlternateBaseUrl', true);
-                  // 构造新的URL
-                  const newUrl = fullUrl.replace(app.globalData.baseUrl, app.globalData.alternateBaseUrl);
-                  // 重新发送请求
-                  wx.request({
-                    url: newUrl,
-                    method: method,
-                    data: data,
-                    header: header,
-                    success: (res) => {
-                      try {
-                        if (showLoading) {
-                          wx.hideLoading();
-                        }
-                        
-                        console.log(`【响应】(重试) ${method} ${newUrl}`, res);
-                        
-                        // 统一处理返回结果
-                        if (res.statusCode === 200) {
-                          // 业务层面的成功与失败处理
-                          if (res.data.code === 1) {
-                            resolve(res.data);
-                          } else if (res.data.code === -1) { // 未登录或token过期
-                            // 清除登录信息
-                            wx.removeStorageSync('userId');
-                            app.globalData.userInfo = null;
-                            app.globalData.isLoggedIn = false;
-                            
-                            // 跳转到登录页面
-                            wx.redirectTo({
-                              url: '/pages/login/login'
-                            });
-                            
-                            reject(res.data);
-                          } else {
-                            // 其他业务错误
-                            wx.showToast({
-                              title: res.data.msg || '请求失败',
-                              icon: 'none',
-                              duration: 2000
-                            });
-                            // 将完整的错误信息传递给调用者，便于显示错误信息
-                            reject(res.data);
-                          }
-                        } else {
-                          // HTTP异常
-                          wx.showToast({
-                            title: `请求错误: ${res.statusCode}`,
-                            icon: 'none',
-                            duration: 2000
-                          });
-                          console.error(`【错误】请求失败(重试)：status=${res.statusCode}`, res);
-                          reject({ code: res.statusCode, msg: '网络异常' });
-                        }
-                      } catch (error) {
-                        console.error('请求响应处理异常(重试):', error);
-                        reject(error);
-                      }
-                    },
-                    fail: (retryErr) => {
-                      console.error(`【错误】重试请求也失败：${method} ${newUrl}`, retryErr);
-                      
-                      // 本地调试环境特殊处理
-                      console.error('请确保：');
-                      console.error('1. 后端服务已启动并监听在8080端口');
-                      console.error('2. 微信开发者工具中勾选了"不校验合法域名"选项');
-                      
-                      wx.showToast({
-                        title: retryErr.errMsg || '网络异常，请稍后再试',
-                        icon: 'none',
-                        duration: 2000
-                      });
-                      reject(retryErr);
+                // 当使用localhost或IP地址失败时，提示开发者
+                const errMsg = err.errMsg || '';
+                if ((errMsg.includes('fail') || errMsg.includes('error')) && 
+                    (fullUrl.includes('localhost') || fullUrl.includes('127.0.0.1'))) {
+                  console.warn('访问本地服务器失败，请确保开发者工具中勾选了"不校验合法域名"选项，或者使用远程服务器地址');
+                  
+                  // 如果有备用URL，尝试使用备用URL
+                  if (retry && alternateBaseUrl && !useAlternateUrl) {
+                    console.log('尝试使用备用服务器地址...');
+                    try {
+                      wx.setStorageSync('useAlternateBaseUrl', true);
+                    } catch (storageErr) {
+                      console.warn('存储备用URL标记失败', storageErr);
                     }
-                  });
-                  return; // 重要：防止执行下面的代码
+                    
+                    // 使用备用URL重试
+                    if (url.indexOf('http') !== 0) {
+                      fullUrl = alternateBaseUrl + url;
+                      console.log(`【重试】使用备用地址：${fullUrl}`);
+                      sendRequest(false); // 不再重试，防止循环
+                      return; // 退出当前失败回调
+                    }
+                  }
                 }
                 
-                // 如果没有重试或者重试失败，显示常规错误提示
-                wx.showToast({
-                  title: err.errMsg || '网络异常，请稍后再试',
-                  icon: 'none',
-                  duration: 2000
-                });
                 reject(err);
               } catch (error) {
                 console.error('请求失败处理异常:', error);
-                reject(error);
+                if (showLoading) {
+                  wx.hideLoading();
+                }
+                reject(err);
               }
             }
           });
@@ -361,7 +379,7 @@ const request = (url, method, data, showLoading = true) => {
       sendRequest();
     });
   } catch (error) {
-    console.error('请求初始化异常:', error);
+    console.error('请求方法异常:', error);
     if (showLoading) {
       wx.hideLoading();
     }
@@ -369,31 +387,31 @@ const request = (url, method, data, showLoading = true) => {
   }
 };
 
-// 封装GET请求
+// GET请求
 const get = (url, data = {}, showLoading = true) => {
   return request(url, 'GET', data, showLoading);
 };
 
-// 封装POST请求
+// POST请求
 const post = (url, data = {}, showLoading = true) => {
   return request(url, 'POST', data, showLoading);
 };
 
-// 封装PUT请求
+// PUT请求
 const put = (url, data = {}, showLoading = true) => {
   return request(url, 'PUT', data, showLoading);
 };
 
-// 封装DELETE请求
+// DELETE请求
 const deleteRequest = (url, data = {}, showLoading = true) => {
   return request(url, 'DELETE', data, showLoading);
 };
 
-// 导出方法
 module.exports = {
+  refreshLogin,
+  request,
   get,
   post,
   put,
-  delete: deleteRequest,
-  refreshLogin
+  delete: deleteRequest
 }; 

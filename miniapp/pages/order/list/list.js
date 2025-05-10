@@ -1,4 +1,5 @@
-import { request } from '../../../utils/request.js';
+const request = require('../../../utils/request');
+const constants = require('../../../utils/constants');
 
 Page({
   /**
@@ -11,20 +12,11 @@ Page({
     page: 1,
     pageSize: 10,
     hasMore: true,
-    statusMap: {
-      1: { text: '待支付', color: '#FF9800' },
-      2: { text: '已支付', color: '#4CAF50' },
-      3: { text: '已完成', color: '#2196F3' },
-      4: { text: '已取消', color: '#9E9E9E' }
-    },
-    tabs: [
-      { id: 0, name: '全部' },
-      { id: 1, name: '待支付' },
-      { id: 2, name: '已支付' },
-      { id: 3, name: '已完成' },
-      { id: 4, name: '已取消' }
-    ],
-    activeTab: 0
+    statusMap: constants.ORDER_STATUS_MAP,
+    tabs: constants.ORDER_STATUS_TABS,
+    activeTab: 0,
+    // 订单状态常量，用于模板中的条件判断
+    ORDER_STATUS: constants.ORDER_STATUS
   },
 
   /**
@@ -64,7 +56,8 @@ Page({
 
     const params = {
       page: this.data.page,
-      pageSize: this.data.pageSize
+      pageSize: this.data.pageSize,
+      userId: wx.getStorageSync('userId') || ''
     };
     
     // 如果不是"全部"标签，则添加状态过滤
@@ -72,13 +65,10 @@ Page({
       params.status = this.data.activeTab;
     }
     
-    request({
-      url: '/api/mini/order/list',
-      method: 'GET',
-      data: params,
-      success: (res) => {
+    request.get('/mini/order/list', params, true)
+      .then(res => {
         if (res.code === 1 && res.data) {
-          const newList = [...this.data.orderList, ...res.data.list];
+          const newList = [...this.data.orderList, ...res.data.records];
           const hasMore = newList.length < res.data.total;
           
           this.setData({
@@ -88,6 +78,8 @@ Page({
             loading: false,
             loadingMore: false
           });
+          
+          console.log('订单列表数据:', newList);
         } else {
           wx.showToast({
             title: res.msg || '获取订单列表失败',
@@ -98,8 +90,8 @@ Page({
             loadingMore: false
           });
         }
-      },
-      fail: () => {
+      })
+      .catch(() => {
         wx.showToast({
           title: '网络异常，请重试',
           icon: 'none'
@@ -108,8 +100,7 @@ Page({
           loading: false,
           loadingMore: false
         });
-      }
-    });
+      });
   },
 
   /**
@@ -144,13 +135,8 @@ Page({
     const orderId = e.currentTarget.dataset.id;
     wx.showLoading({ title: '发起支付' });
     
-    request({
-      url: '/api/mini/pay/wxpay',
-      method: 'POST',
-      data: {
-        orderId: orderId
-      },
-      success: (res) => {
+    request.post('/mini/order/pay', { id: orderId }, true)
+      .then(res => {
         wx.hideLoading();
         if (res.code === 1 && res.data) {
           const payData = res.data;
@@ -191,15 +177,14 @@ Page({
             icon: 'none'
           });
         }
-      },
-      fail: () => {
+      })
+      .catch(() => {
         wx.hideLoading();
         wx.showToast({
           title: '网络异常，请重试',
           icon: 'none'
         });
-      }
-    });
+      });
     return false;
   },
 
@@ -216,10 +201,12 @@ Page({
         if (res.confirm) {
           wx.showLoading({ title: '取消中...' });
           
-          request({
-            url: `/api/mini/order/cancel/${orderId}`,
-            method: 'POST',
-            success: (res) => {
+          // 使用constants.ORDER_STATUS.CANCELLED(值为4)作为取消状态
+          request.post('/mini/order/cancel', { 
+            id: orderId,
+            status: constants.ORDER_STATUS.CANCELLED
+          }, true)
+            .then(res => {
               wx.hideLoading();
               if (res.code === 1) {
                 wx.showToast({
@@ -241,15 +228,14 @@ Page({
                   icon: 'none'
                 });
               }
-            },
-            fail: () => {
+            })
+            .catch(() => {
               wx.hideLoading();
               wx.showToast({
                 title: '网络异常，请重试',
                 icon: 'none'
               });
-            }
-          });
+            });
         }
       }
     });

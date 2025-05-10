@@ -34,6 +34,13 @@ wx:
     aesKey: 你的aesKey
     msgDataFormat: JSON
 
+# JWT配置
+jwt:
+  # JWT加密密钥
+  secret: smdcSecretKey123456789012345678901234567890
+  # JWT令牌过期时间，单位秒（7天）
+  expiration: 604800
+
 # 自定义配置
 smdc:
   upload-path: ${user.dir}/upload

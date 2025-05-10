@@ -32,7 +32,7 @@
       <view class="cart-header">
         <view class="cart-title">购物车</view>
         <view class="cart-clear" bindtap="clearCart">
-          <image class="cart-clear-icon" src="/images/trash.png" mode="aspectFit"></image>
+          <icon type="clear" size="16" color="#999999"/>
           <text>清空</text>
         </view>
       </view>

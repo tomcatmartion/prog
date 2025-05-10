@@ -1,4 +1,5 @@
-import { request } from '../../../utils/request.js';
+const request = require('../../../utils/request');
+const constants = require('../../../utils/constants');
 
 Page({
   /**
@@ -8,12 +9,8 @@ Page({
     orderId: null,
     orderDetail: null,
     loading: true,
-    statusMap: {
-      1: { text: '待支付', color: '#FF9800' },
-      2: { text: '已支付', color: '#4CAF50' },
-      3: { text: '已完成', color: '#2196F3' },
-      4: { text: '已取消', color: '#9E9E9E' }
-    }
+    statusMap: constants.ORDER_STATUS_MAP,
+    ORDER_STATUS: constants.ORDER_STATUS
   },
 
   /**
@@ -42,10 +39,8 @@ Page({
   fetchOrderDetail: function () {
     this.setData({ loading: true });
     
-    request({
-      url: `/api/mini/order/${this.data.orderId}`,
-      method: 'GET',
-      success: (res) => {
+    request.get(`/mini/order/detail/${this.data.orderId}`, {}, true)
+      .then(res => {
         if (res.code === 1 && res.data) {
           this.setData({
             orderDetail: res.data,
@@ -60,15 +55,14 @@ Page({
             wx.navigateBack();
           }, 1500);
         }
-      },
-      fail: () => {
+      })
+      .catch(() => {
         wx.showToast({
           title: '网络异常，请重试',
           icon: 'none'
         });
         this.setData({ loading: false });
-      }
-    });
+      });
   },
 
   /**
@@ -94,13 +88,11 @@ Page({
     wx.showLoading({ title: '发起支付' });
     
     // 调用支付接口
-    request({
-      url: '/api/mini/pay/wxpay',
-      method: 'POST',
-      data: {
-        orderId: this.data.orderId
-      },
-      success: (res) => {
+    request.post('/mini/order/pay', { 
+      id: this.data.orderId,
+      payMethod: 1  // 微信支付
+    }, true)
+      .then(res => {
         wx.hideLoading();
         if (res.code === 1 && res.data) {
           const payData = res.data;
@@ -136,15 +128,14 @@ Page({
             icon: 'none'
           });
         }
-      },
-      fail: () => {
+      })
+      .catch(() => {
         wx.hideLoading();
         wx.showToast({
           title: '网络异常，请重试',
           icon: 'none'
         });
-      }
-    });
+      });
   },
 
   /**
@@ -158,10 +149,12 @@ Page({
         if (res.confirm) {
           wx.showLoading({ title: '取消中...' });
           
-          request({
-            url: `/api/mini/order/cancel/${this.data.orderId}`,
-            method: 'POST',
-            success: (res) => {
+          // 使用constants.ORDER_STATUS.CANCELLED(值为4)作为取消状态
+          request.post('/mini/order/cancel', { 
+            id: this.data.orderId,
+            status: constants.ORDER_STATUS.CANCELLED
+          }, true)
+            .then(res => {
               wx.hideLoading();
               if (res.code === 1) {
                 wx.showToast({
@@ -178,15 +171,14 @@ Page({
                   icon: 'none'
                 });
               }
-            },
-            fail: () => {
+            })
+            .catch(() => {
               wx.hideLoading();
               wx.showToast({
                 title: '网络异常，请重试',
                 icon: 'none'
               });
-            }
-          });
+            });
         }
       }
     });

@@ -41,16 +41,11 @@ Page({
   // 检查登录状态
   checkLoginStatus() {
     try {
-      let userId = null;
-      try {
-        userId = wx.getStorageSync('userId');
-      } catch (error) {
-        console.warn('获取userId失败，可能在游客模式:', error);
-      }
-      
+      // 使用token检查登录状态
+      const token = auth.getToken();
       const userInfo = app.globalData.userInfo;
       
-      if (userId && userInfo) {
+      if (token && userInfo) {
         this.setData({
           loginStatus: true,
           userInfo: userInfo,
@@ -65,29 +60,58 @@ Page({
     }
   },
   
-  // 跳转到首页(新方法)
+  // 跳转到首页
   navigateToIndex() {
     console.log('尝试跳转到首页');
     
-    wx.switchTab({
-      url: '/pages/index/index',
-      success: () => {
-        console.log('跳转成功');
-      },
-      fail: (error) => {
-        console.error('switchTab跳转失败', error);
-        // 如果switchTab失败，尝试redirectTo
-        wx.redirectTo({
+    // 清除可能存在的定时器
+    if (this.data._navigationTimer) {
+      clearTimeout(this.data._navigationTimer);
+    }
+    
+    // 检查当前页面，避免重复跳转
+    const pages = getCurrentPages();
+    const currentPage = pages.length > 0 ? pages[pages.length - 1].route : '';
+    if (currentPage === 'pages/index/index') {
+      console.log('当前已在首页，无需跳转');
+      return;
+    }
+    
+    // 设置标记并使用延迟
+    this.setData({
+      _navigationTimer: setTimeout(() => {
+        console.log('准备跳转到首页，使用switchTab方式');
+        wx.switchTab({
           url: '/pages/index/index',
-          fail: (err) => {
-            console.error('redirectTo也失败', err);
-            // 最后尝试reLaunch
-            wx.reLaunch({
-              url: '/pages/index/index'
-            });
+          success: () => {
+            console.log('跳转到首页成功');
+          },
+          fail: (error) => {
+            console.error('switchTab跳转失败', error);
+            
+            // 如果switchTab失败，增加延迟后使用reLaunch
+            setTimeout(() => {
+              console.log('尝试使用reLaunch方式跳转到首页');
+              wx.reLaunch({
+                url: '/pages/index/index',
+                success: () => {
+                  console.log('使用reLaunch跳转到首页成功');
+                },
+                fail: (err) => {
+                  console.error('所有跳转方式都失败:', err);
+                  
+                  // 显示引导用户手动操作的提示
+                  wx.showToast({
+                    title: '请点击下方"首页"按钮',
+                    icon: 'none',
+                    duration: 3000
+                  });
+                }
+              });
+            }, 800);
           }
         });
-      }
+      }, 300)
     });
   },
   
@@ -147,35 +171,45 @@ Page({
       wx.hideLoading();
       
       if (res.code === 1) {
-        // 登录成功，保存用户信息
-        app.globalData.userInfo = res.data;
+        // 登录成功，解析返回数据
+        const userData = res.data.user; // 用户信息
+        const token = res.data.token;   // JWT令牌
+        
+        console.log('登录成功，处理用户数据和令牌');
+        
+        // 保存用户信息到全局
+        app.globalData.userInfo = userData;
         app.globalData.isLoggedIn = true;
         
-        // 存储用户ID到本地
+        // 存储JWT令牌
+        auth.setToken(token);
+        
+        // 存储用户ID到本地（兼容旧版）
         try {
-          wx.setStorageSync('userId', res.data.id);
-          console.log('成功存储用户ID:', res.data.id);
+          wx.setStorageSync('userId', userData.id);
+          console.log('成功存储用户ID:', userData.id);
         } catch (error) {
           console.warn('存储用户ID失败:', error);
         }
         
         this.setData({
           loginStatus: true,
-          userInfo: res.data,
+          userInfo: userData,
           hasUserInfo: true
         });
         
-        // 登录成功后显示提示
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 1000
-        });
+        // 简化登录成功流程，避免多余的弹窗和延迟
+        if (!isAutoLogin) {
+          // 只有在手动登录时才显示成功提示
+          wx.showToast({
+            title: '登录成功',
+            icon: 'success',
+            duration: 800
+          });
+        }
         
-        // 跳转到首页
-        setTimeout(() => {
-          this.navigateToIndex();
-        }, 1000);
+        // 直接跳转到首页，不使用额外的延迟
+        this.navigateToIndex();
       } else {
         // 登录失败，显示错误信息
         wx.showToast({
@@ -243,24 +277,32 @@ Page({
           };
           
           // 使用code和用户信息调用后端登录接口
-          request.post('/mini/user/wx/login', loginData).then(res => {
+          request.post('/mini/user/login', loginData).then(res => {
             wx.hideLoading();
             
             if (res.code === 1) {
-              // 登录成功，保存用户信息
-              app.globalData.userInfo = res.data;
+              // 登录成功，解析返回数据
+              const userData = res.data.user; // 用户信息
+              const token = res.data.token;   // JWT令牌
+              
+              // 保存用户信息到全局
+              app.globalData.userInfo = userData;
               app.globalData.isLoggedIn = true;
               
-              // 存储用户ID到本地
+              // 存储JWT令牌
+              auth.setToken(token);
+              
+              // 存储用户ID到本地（兼容旧版）
               try {
-                wx.setStorageSync('userId', res.data.id);
+                wx.setStorageSync('userId', userData.id);
+                console.log('成功存储用户ID:', userData.id);
               } catch (error) {
                 console.warn('存储用户ID失败:', error);
               }
               
               this.setData({
                 loginStatus: true,
-                userInfo: res.data,
+                userInfo: userData,
                 hasUserInfo: true
               });
               
@@ -268,13 +310,13 @@ Page({
               wx.showToast({
                 title: '登录成功',
                 icon: 'success',
-                duration: 1500
+                duration: 1000
               });
               
-              // 跳转到首页
+              // 跳转到首页，减少延迟时间
               setTimeout(() => {
                 this.navigateToIndex();
-              }, 1500);
+              }, 800);
             } else {
               // 登录失败，显示错误信息
               wx.showToast({

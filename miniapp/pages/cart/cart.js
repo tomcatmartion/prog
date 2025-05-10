@@ -231,26 +231,9 @@ Page(auth.pageAuthMixin({
       return;
     }
     
-    // 检查是否已选择桌位
-    if (!this.data.tableId) {
-      wx.showModal({
-        title: '提示',
-        content: '请先扫描桌位二维码',
-        confirmText: '去扫码',
-        success: (res) => {
-          if (res.confirm) {
-            wx.switchTab({
-              url: '/pages/index/index'
-            });
-          }
-        }
-      });
-      return;
-    }
-    
     // 跳转到订单确认页面
     wx.navigateTo({
-      url: '/pages/order/confirm/confirm?tableId=' + this.data.tableId + '&selected=' + JSON.stringify(this.data.selectedItems)
+      url: '/pages/order/confirm/confirm?tableId=' + (this.data.tableId || '') + '&selected=' + JSON.stringify(this.data.selectedItems)
     });
   }
 })) 

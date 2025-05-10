@@ -45,7 +45,7 @@ public class Order implements Serializable {
     private BigDecimal amount;
 
     /**
-     * 状态：1待付款，2待接单，3待上菜，4已完成，5已取消
+     * 状态：1待付款，2已支付，3已完成，4已取消
      */
     private Integer status;
 

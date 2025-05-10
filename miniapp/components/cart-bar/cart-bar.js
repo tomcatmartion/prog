@@ -137,18 +137,10 @@ Component({
         return;
       }
       
-      if (!this.properties.tableId) {
-        wx.showToast({
-          title: '请先扫描桌位二维码',
-          icon: 'none'
-        });
-        return;
-      }
-      
       this.closeCart();
       
       wx.navigateTo({
-        url: '/pages/order/confirm/confirm?tableId=' + this.properties.tableId
+        url: '/pages/order/confirm/confirm?tableId=' + (this.properties.tableId || '')
       });
     }
   }

@@ -56,9 +56,10 @@ public interface OrderService extends IService<Order> {
      * @param page 页码
      * @param pageSize 每页记录数
      * @param userId 用户ID
+     * @param status 订单状态(可选)
      * @return 分页数据
      */
-    Page<OrderVO> userPage(int page, int pageSize, Long userId);
+    Page<OrderVO> userPage(int page, int pageSize, Long userId, Integer status);
 
     /**
      * 管理端订单分页查询
@@ -69,4 +70,12 @@ public interface OrderService extends IService<Order> {
      * @return 分页数据
      */
     Page<OrderVO> adminPage(int page, int pageSize, String number, Integer status);
+
+    /**
+     * 验证订单归属权，确保用户只能操作自己的订单
+     * @param orderId 订单ID
+     * @param userId 用户ID
+     * @return 是否有权操作此订单
+     */
+    boolean verifyOrderOwner(Long orderId, Long userId);
 } 

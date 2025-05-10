@@ -1,4 +1,4 @@
-import { request } from '../../utils/request.js';
+const request = require('../../utils/request');
 const app = getApp();
 const auth = require('../../utils/auth');
 
@@ -42,26 +42,29 @@ Page(auth.pageAuthMixin({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-    // 检查登录状态
-    auth.validateLogin();
-    
-    // 更新用户信息
-    this.setData({
-      userInfo: app.globalData.userInfo
-    });
+    // 检查登录状态并获取最新用户信息
+    const userId = wx.getStorageSync('userId');
+    if (userId) {
+      this.getUserInfo();
+    } else {
+      this.setData({
+        userInfo: null,
+        isLogin: false
+      });
+    }
   },
 
   /**
    * 获取用户信息
    */
   getUserInfo: function () {
-    const token = wx.getStorageSync('token');
-    if (token) {
-      request({
-        url: '/api/mini/user/info',
-        method: 'GET',
-        success: (res) => {
+    const userId = wx.getStorageSync('userId');
+    if (userId) {
+      request.post('/mini/user/info', { userId: userId }, true)
+        .then(res => {
           if (res.code === 1 && res.data) {
+            app.globalData.userInfo = res.data;
+            app.globalData.isLoggedIn = true;
             this.setData({
               userInfo: res.data,
               isLogin: true
@@ -72,14 +75,13 @@ Page(auth.pageAuthMixin({
               isLogin: false
             });
           }
-        },
-        fail: () => {
+        })
+        .catch(() => {
           this.setData({
             userInfo: null,
             isLogin: false
           });
-        }
-      });
+        });
     } else {
       this.setData({
         userInfo: null,

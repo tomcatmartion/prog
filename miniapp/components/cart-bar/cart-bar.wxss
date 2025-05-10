@@ -1,6 +1,32 @@
 /* components/cart-bar/cart-bar.wxss */
 @import "../../styles/theme.wxss";
 
+/* 图标样式 */
+.icon-cart {
+  font-size: 40rpx;
+  color: #333333;
+}
+
+.icon-cart::before {
+  content: "\e6af"; /* 微信原生购物车图标编码 */
+  font-family: "weui";
+}
+
+.icon-cart-filled {
+  color: #ffffff;
+}
+
+.icon-trash {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+  color: var(--text-hint);
+}
+
+.icon-trash::before {
+  content: "\e640"; /* 微信原生垃圾桶图标编码 */
+  font-family: "weui";
+}
+
 .cart-bar {
   position: fixed;
   left: 0;

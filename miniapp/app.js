@@ -1,5 +1,6 @@
 // app.js
 const config = require('./config/config');
+const auth = require('./utils/auth');
 
 App({
   onLaunch() {
@@ -35,29 +36,29 @@ App({
 
   // 检查登录状态
   checkLoginStatus() {
-    // 获取本地存储的用户ID
-    let userId;
-    try {
-      userId = wx.getStorageSync('userId');
-    } catch (error) {
-      console.error('获取userId失败:', error);
+    // 设置状态检查标记
+    this.globalData.loginStatusChecking = true;
+    
+    // 获取JWT令牌
+    const token = auth.getToken();
+    
+    // 如果没有令牌，则标记为未登录
+    if (!token) {
       this.globalData.isLoggedIn = false;
+      this.globalData.loginStatusChecking = false;
       return;
     }
     
-    // 如果没有用户ID，则标记为未登录
-    if (!userId) {
-      this.globalData.isLoggedIn = false;
-      return;
-    }
+    // 有令牌，尝试从后端获取用户信息
+    const header = {
+      'content-type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
     
-    // 有用户ID，尝试从后端获取用户信息
     wx.request({
       url: this.globalData.baseUrl + '/mini/user/info',
-      method: 'POST',
-      data: {
-        userId: userId
-      },
+      method: 'GET',
+      header: header,
       success: (result) => {
         if (result.data.code === 1) {
           // 登录状态有效，保存用户信息
@@ -70,11 +71,8 @@ App({
           }
         } else {
           // 登录状态无效，清除登录信息
-          try {
-            wx.removeStorageSync('userId');
-          } catch (error) {
-            console.error('清除userId失败:', error);
-          }
+          auth.clearToken();
+          wx.removeStorageSync('userId'); // 兼容旧版，可以逐步移除
           this.globalData.userInfo = null;
           this.globalData.isLoggedIn = false;
         }
@@ -83,6 +81,10 @@ App({
         // 请求失败，保持离线状态
         console.error('检查登录状态失败', err);
         this.globalData.isLoggedIn = false;
+      },
+      complete: () => {
+        // 无论结果如何，标记检查完成
+        this.globalData.loginStatusChecking = false;
       }
     });
   },
@@ -126,5 +128,6 @@ App({
     windowWidth: 0,
     tableId: null, // 当前桌位ID
     cartList: [], // 购物车数据
+    loginStatusChecking: false, // 登录状态检查中标记
   }
 }) 
