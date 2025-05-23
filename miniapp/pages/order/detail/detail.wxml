@@ -7,11 +7,11 @@
   </view>
   
   <!-- 桌位信息，仅在有桌位信息时显示 -->
-  <view class="section table-info" wx:if="{{orderDetail.tableName && orderDetail.tableCode}}">
+  <view class="section table-info" wx:if="{{orderDetail.tableId}}">
     <view class="section-title">桌位信息</view>
     <view class="table-content">
-      <view class="table-name">{{orderDetail.tableName}}</view>
-      <view class="table-code">桌号：{{orderDetail.tableCode}}</view>
+      <view class="table-name">{{orderDetail.tableName || '桌号:' + orderDetail.tableId}}</view>
+      <view class="table-code" wx:if="{{orderDetail.tableCode}}">编码：{{orderDetail.tableCode}}</view>
     </view>
   </view>
   
@@ -37,49 +37,42 @@
   </view>
   
   <!-- 订单商品列表 -->
-  <view class="section order-items">
-    <view class="section-title">订单商品</view>
-    <view class="item-list" wx:if="{{orderDetail.orderDetails && orderDetail.orderDetails.length > 0}}">
-      <view class="order-item" wx:for="{{orderDetail.orderDetails}}" wx:key="id">
-        <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
-        <view class="item-info">
-          <view class="item-name">{{item.dishName}}</view>
-          <view class="item-spec" wx:if="{{item.specificationName}}">规格：{{item.specificationName}}</view>
-          <view class="item-bottom">
-            <view class="item-price price">{{item.amount}}</view>
-            <view class="item-quantity">x{{item.number}}</view>
+  <view class="section order-dishes">
+    <view class="section-title">订单菜品</view>
+    <view class="dish-list">
+      <view class="dish-item" wx:for="{{orderDetail.orderDetails}}" wx:key="id">
+        <image class="dish-image" src="{{item.dishImage || '/images/default_dish.png'}}" mode="aspectFill"></image>
+        <view class="dish-info">
+          <view class="dish-name">{{item.dishName}}</view>
+          <view class="dish-spec" wx:if="{{item.specificationName}}">规格：{{item.specificationName}}</view>
+          <view class="dish-bottom">
+            <text class="dish-price price">¥{{item.amount / item.number}}</text>
+            <text class="dish-count">x{{item.number}}</text>
           </view>
         </view>
       </view>
-      <view class="order-total">
-        <text>共{{orderDetail.orderDetails.length}}件商品，合计：</text>
-        <view class="total-price price">{{orderDetail.amount}}</view>
-      </view>
-    </view>
-    <!-- 没有商品详情时显示 -->
-    <view class="empty-items" wx:else>
-      <text>暂无商品详情</text>
-      <view class="order-total">
-        <text>合计：</text>
-        <view class="total-price price">{{orderDetail.amount}}</view>
-      </view>
     </view>
   </view>
   
-  <!-- 操作按钮 -->
-  <view class="footer-bar safe-bottom" wx:if="{{orderDetail.status === ORDER_STATUS.PENDING_PAYMENT}}">
-    <view class="action-btn cancel-btn" bindtap="cancelOrder">取消订单</view>
-    <view class="action-btn pay-btn" bindtap="payOrder">立即支付</view>
+  <!-- 订单金额 -->
+  <view class="section amount-info">
+    <view class="amount-row">
+      <text>总金额</text>
+      <text class="price">¥{{orderDetail.amount}}</text>
+    </view>
   </view>
   
-  <!-- 返回按钮 -->
-  <view class="back-btn" wx:if="{{orderDetail.status !== ORDER_STATUS.PENDING_PAYMENT}}" bindtap="goToOrderList">返回订单列表</view>
+  <!-- 底部操作区 -->
+  <view class="bottom-actions" wx:if="{{orderDetail.status === 1}}">
+    <view class="btn cancel" bindtap="cancelOrder">取消订单</view>
+    <view class="btn pay" bindtap="payOrder">立即支付</view>
+  </view>
 </view>
 
 <!-- 加载中 -->
-<view class="loading-container" wx:if="{{loading}}">
+<view class="loading-container" wx:else>
   <view class="loading">
-    <view class="loading-spinner"></view>
-    <view class="loading-text">加载中...</view>
+    <image class="loading-icon" src="/images/loading.gif"></image>
+    <text>加载中...</text>
   </view>
 </view> 

@@ -42,11 +42,15 @@
     
     <!-- 桌号扫描区域 -->
     <view class="scan-area">
-      <view class="section-title">桌号扫描 (可选)</view>
+      <view class="section-title">桌号扫描/输入</view>
       <view class="scan-content">
         <view class="scan-status {{scanStatus.hasScan ? 'scanned' : ''}}">
           <text wx:if="{{scanStatus.hasScan}}">{{scanStatus.tableInfo}}</text>
-          <text wx:else>扫描桌号可提供更好的服务体验</text>
+          <text wx:else>扫描或输入桌号可提供更好的服务体验</text>
+        </view>
+        <view class="table-input-area">
+          <input class="table-input" type="text" placeholder="请输入桌台号" value="{{inputTableId}}" bindinput="onTableInputChange" />
+          <view class="confirm-btn" bindtap="confirmTableInput">确认</view>
         </view>
         <view class="scan-btn" bindtap="scanTable">
           <text>扫描桌号</text>

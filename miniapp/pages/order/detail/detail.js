@@ -94,7 +94,20 @@ Page({
     }, true)
       .then(res => {
         wx.hideLoading();
-        if (res.code === 1 && res.data) {
+        if (res.code === 1) {
+          // 已经支付成功的情况（服务器可能直接更新了订单状态）
+          if (!res.data || Object.keys(res.data).length === 0) {
+            wx.showToast({
+              title: '支付成功',
+              icon: 'success'
+            });
+            // 重新获取订单详情
+            setTimeout(() => {
+              this.fetchOrderDetail();
+            }, 1000);
+            return;
+          }
+          
           const payData = res.data;
           
           // 调用微信支付
@@ -123,14 +136,16 @@ Page({
             }
           });
         } else {
+          console.error('支付接口返回错误:', res);
           wx.showToast({
             title: res.msg || '支付失败，请重试',
             icon: 'none'
           });
         }
       })
-      .catch(() => {
+      .catch(err => {
         wx.hideLoading();
+        console.error('支付请求异常:', err);
         wx.showToast({
           title: '网络异常，请重试',
           icon: 'none'
@@ -151,8 +166,7 @@ Page({
           
           // 使用constants.ORDER_STATUS.CANCELLED(值为4)作为取消状态
           request.post('/mini/order/cancel', { 
-            id: this.data.orderId,
-            status: constants.ORDER_STATUS.CANCELLED
+            id: this.data.orderId
           }, true)
             .then(res => {
               wx.hideLoading();

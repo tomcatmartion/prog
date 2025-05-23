@@ -8,14 +8,5 @@ import lombok.Data;
  */
 @Data
 public class OrderDetailVO extends OrderDetail {
-
-    /**
-     * 菜品名称
-     */
-    private String dishName;
-
-    /**
-     * 规格名称
-     */
-    private String specificationName;
+    // 继承自OrderDetail，自动包含了dishName、dishImage和specificationName字段
 }

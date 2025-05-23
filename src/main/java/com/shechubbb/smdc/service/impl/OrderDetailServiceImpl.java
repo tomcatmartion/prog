@@ -52,14 +52,21 @@ public class OrderDetailServiceImpl extends ServiceImpl<OrderDetailMapper, Order
             OrderDetailVO orderDetailVO = new OrderDetailVO();
             BeanUtils.copyProperties(orderDetail, orderDetailVO);
             
-            // 设置菜品名称，使用DishMapper替代DishService
-            Dish dish = dishMapper.selectById(orderDetail.getDishId());
-            if (dish != null) {
-                orderDetailVO.setDishName(dish.getName());
+            // 如果订单中没有缓存菜品信息，则从数据库查询（兼容旧数据）
+            if (orderDetail.getDishName() == null) {
+                // 设置菜品名称，使用DishMapper替代DishService
+                Dish dish = dishMapper.selectById(orderDetail.getDishId());
+                if (dish != null) {
+                    orderDetailVO.setDishName(dish.getName());
+                    // 如果没有图片，同时设置图片
+                    if (orderDetail.getDishImage() == null) {
+                        orderDetailVO.setDishImage(dish.getImage());
+                    }
+                }
             }
             
-            // 设置规格名称
-            if (orderDetail.getSpecificationId() != null) {
+            // 如果订单中没有缓存规格信息，则从数据库查询（兼容旧数据）
+            if (orderDetail.getSpecificationName() == null && orderDetail.getSpecificationId() != null) {
                 Specification specification = specificationService.getById(orderDetail.getSpecificationId());
                 if (specification != null) {
                     orderDetailVO.setSpecificationName(specification.getName());

@@ -67,9 +67,27 @@ public class AdminOrderController {
      * 取消订单
      */
     @PostMapping("/cancel")
-    public Result<Void> cancel(@RequestBody Map<String, Long> map) {
-        Long id = map.get("id");
-        orderService.cancelOrder(id);
-        return Result.success();
+    public Result<Void> cancel(@RequestBody Map<String, Object> map) {
+        try {
+            // 确保id存在且能转换为Long类型
+            if (map.get("id") == null) {
+                return Result.error("订单ID不能为空");
+            }
+            
+            Long id = Long.valueOf(map.get("id").toString());
+            String reason = map.get("reason") != null ? map.get("reason").toString() : null;
+            
+            // 记录取消原因
+            log.info("管理端取消订单 - id: {}, reason: {}", id, reason);
+            
+            orderService.cancelOrder(id);
+            return Result.success();
+        } catch (NumberFormatException e) {
+            log.error("取消订单失败：订单ID格式错误", e);
+            return Result.error("订单ID格式错误");
+        } catch (Exception e) {
+            log.error("取消订单失败", e);
+            return Result.error("取消订单失败：" + e.getMessage());
+        }
     }
 }

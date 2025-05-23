@@ -84,13 +84,15 @@ public class MiniOrderController {
             orderService.payOrder(id, payMethod);
             
             // 模拟返回微信支付参数
-            // 注意：实际项目中，这里应该调用微信支付接口获取支付参数
+            // 由于模拟环境，直接返回空数据，前端会处理为支付成功
             Map<String, String> payParams = new HashMap<>();
-            payParams.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
-            payParams.put("nonceStr", UUID.randomUUID().toString().replaceAll("-", ""));
-            payParams.put("package", "prepay_id=wx" + System.currentTimeMillis());
-            payParams.put("signType", "MD5");
-            payParams.put("paySign", UUID.randomUUID().toString().replaceAll("-", ""));
+            
+            // 注释掉模拟参数，避免前端误认为要调用微信支付API
+            // payParams.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
+            // payParams.put("nonceStr", UUID.randomUUID().toString().replaceAll("-", ""));
+            // payParams.put("package", "prepay_id=wx" + System.currentTimeMillis());
+            // payParams.put("signType", "MD5");
+            // payParams.put("paySign", UUID.randomUUID().toString().replaceAll("-", ""));
             
             return Result.success(payParams);
         } catch (Exception e) {

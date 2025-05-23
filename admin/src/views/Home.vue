@@ -107,7 +107,7 @@ export default {
   },
   methods: {
     logout() {
-      window.sessionStorage.clear()
+      this.$store.dispatch('logout')
       this.$router.push('/login')
     },
     saveNavState(activePath) {

@@ -80,6 +80,102 @@
 - **替代方案**：如无合适内置图标，可安装其他图标库依赖
 - **最后选择**：最后考虑使用图片资源
 
+### 后端已实现接口列表
+
+#### 用户相关接口
+##### 小程序端接口
+- **POST /mini/user/login** - 微信登录
+- **POST /mini/user/account/login** - 账号密码登录
+- **POST /mini/user/info** - 获取当前用户信息
+- **GET /mini/user/info/{id}** - 根据ID获取用户信息（管理员权限）
+- **POST /mini/user/update** - 更新用户信息
+
+##### 管理端接口
+- **POST /admin/employee/login** - 员工登录
+- **GET /admin/employee/info/{id}** - 获取员工信息
+- **GET /admin/employee/page** - 员工列表分页查询
+- **POST /admin/employee/add** - 添加员工
+- **POST /admin/employee/update** - 更新员工信息
+
+#### 分类相关接口
+##### 小程序端接口
+- **GET /mini/category/list** - 获取分类列表
+
+##### 管理端接口
+- **GET /admin/category/page** - 分类分页查询
+- **GET /admin/category/list** - 分类列表查询
+- **POST /admin/category/add** - 添加分类
+- **POST /admin/category/update** - 更新分类
+- **POST /admin/category/delete** - 删除分类
+
+#### 菜品相关接口
+##### 小程序端接口
+- **GET /mini/dish/list/{categoryId}** - 根据分类ID获取菜品列表
+- **GET /mini/dish/list?categoryId=** - 根据分类ID获取菜品列表（请求参数方式）
+- **GET /mini/dish/detail/{id}** - 获取菜品详情
+
+##### 管理端接口
+- **GET /admin/dish/page** - 菜品分页查询
+- **GET /admin/dish/info/{id}** - 获取菜品信息
+- **POST /admin/dish/add** - 添加菜品
+- **POST /admin/dish/update** - 更新菜品
+- **POST /admin/dish/delete** - 删除菜品
+
+#### 桌位相关接口
+##### 管理端接口
+- **GET /admin/table/page** - 桌位分页查询
+- **POST /admin/table/add** - 添加桌位
+- **POST /admin/table/update** - 更新桌位
+- **POST /admin/table/delete** - 删除桌位
+- **GET /admin/table/qrcode/{id}** - 生成桌位二维码
+
+#### 订单相关接口
+##### 小程序端接口
+- **POST /mini/order/create** - 创建订单
+- **POST /mini/order/pay** - 支付订单
+- **POST /mini/order/cancel** - 取消订单
+- **GET /mini/order/list** - 订单列表
+- **GET /mini/order/detail/{id}** - 订单详情
+- **GET /mini/order/table/{code}** - 扫码获取桌位信息
+
+##### 管理端接口
+- **GET /admin/order/page** - 订单分页查询
+- **GET /admin/order/detail/{id}** - 获取订单详情
+- **POST /admin/order/accept** - 接单
+- **POST /admin/order/complete** - 完成订单
+- **POST /admin/order/cancel** - 取消订单
+
+#### 店铺信息相关接口
+##### 小程序端接口
+- **POST /mini/shop/info** - 获取店铺信息
+
+##### 管理端接口
+- **GET /admin/shop/info** - 获取店铺信息
+- **POST /admin/shop/update** - 更新店铺信息
+
+
+### 小程序端已实现页面
+
+#### 基础页面
+- **登录页面** (`pages/login/login`) - 用户登录页面，支持微信登录和账号密码登录
+- **首页** (`pages/index/index`) - 应用首页，展示店铺信息和热门菜品
+- **分类页** (`pages/category/category`) - 展示菜品分类列表
+- **菜品页** (`pages/dish/dish`) - 展示具体分类下的菜品列表
+- **购物车** (`pages/cart/cart`) - 用户已选菜品的购物车
+
+#### 订单相关页面
+- **订单列表** (`pages/order/list/list`) - 用户的历史订单列表
+- **订单确认** (`pages/order/confirm/confirm`) - 确认订单信息和支付
+- **订单详情** (`pages/order/detail/detail`) - 查看订单的详细信息
+
+#### 用户相关页面
+- **用户中心** (`pages/user/user`) - 用户个人中心，展示用户信息和功能入口
+
+#### 导航结构
+- **底部Tab导航**：主页和用户中心
+- **顶部导航**：页面标题"扫码点餐"，采用品牌主色调 #FF5722
+
+
 ### 数据库表定义
 -- 用户表
 CREATE TABLE IF NOT EXISTS `user` (

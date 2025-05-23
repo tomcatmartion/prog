@@ -7,7 +7,7 @@ import request from '@/utils/request'
  */
 export function getTableList(query) {
   return request({
-    url: '/admin/table/list',
+    url: '/admin/table/page',
     method: 'get',
     params: query
   })

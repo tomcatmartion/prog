@@ -22,6 +22,11 @@ public class OrderVO extends Order {
     private String tableName;
 
     /**
+     * 桌位编码
+     */
+    private String tableCode;
+
+    /**
      * 订单详情列表
      */
     private List<OrderDetailVO> orderDetails;

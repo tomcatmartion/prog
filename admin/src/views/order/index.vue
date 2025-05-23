@@ -44,53 +44,6 @@
       </el-button>
     </div>
 
-    <!-- 统计卡片 -->
-    <el-row :gutter="20" class="statistics-container">
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>今日订单</span>
-          </div>
-          <div class="card-body">
-            <div class="card-panel-text">总订单数</div>
-            <div class="card-panel-num">{{ statistics.todayTotal }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>待处理订单</span>
-          </div>
-          <div class="card-body">
-            <div class="card-panel-text">未接单数</div>
-            <div class="card-panel-num">{{ statistics.pendingCount }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>今日营业额</span>
-          </div>
-          <div class="card-body">
-            <div class="card-panel-text">总金额</div>
-            <div class="card-panel-num">¥{{ statistics.todayAmount }}</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>本月营业额</span>
-          </div>
-          <div class="card-body">
-            <div class="card-panel-text">总金额</div>
-            <div class="card-panel-num">¥{{ statistics.monthAmount }}</div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
 
     <!-- 表格 -->
     <el-table
@@ -102,11 +55,11 @@
       highlight-current-row
       style="width: 100%"
     >
-      <el-table-column label="订单号" prop="orderNo" align="center" width="180" />
+      <el-table-column label="订单号" prop="number" align="center" width="180" />
       <el-table-column label="桌号" prop="tableCode" align="center" width="100" />
       <el-table-column label="金额" align="center" width="100">
         <template slot-scope="{row}">
-          <span>¥{{ row.totalPrice }}</span>
+          <span>¥{{ row.amount }}</span>
         </template>
       </el-table-column>
       <el-table-column label="订单状态" align="center" width="120">
@@ -123,7 +76,7 @@
       </el-table-column>
       <el-table-column label="下单时间" align="center" width="180">
         <template slot-scope="{row}">
-          <span>{{ row.orderTime }}</span>
+          <span>{{ row.createTime }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="260" class-name="small-padding fixed-width">
@@ -134,22 +87,6 @@
             @click="handleView(row)"
           >
             查看
-          </el-button>
-          <el-button 
-            v-if="row.status === 2" 
-            type="success" 
-            size="mini" 
-            @click="handleComplete(row)"
-          >
-            完成
-          </el-button>
-          <el-button 
-            v-if="row.status === 1" 
-            type="warning" 
-            size="mini" 
-            @click="handleAccept(row)"
-          >
-            接单
           </el-button>
           <el-button 
             v-if="row.status < 3" 
@@ -206,20 +143,34 @@
           <div class="detail-header">
             <div class="detail-item">
               <span class="label">订单号：</span>
-              <span class="value">{{ orderDetail.orderNo }}</span>
+              <span class="value">{{ orderDetail.number }}</span>
             </div>
             <div class="detail-item">
               <span class="label">下单时间：</span>
-              <span class="value">{{ orderDetail.orderTime }}</span>
+              <span class="value">{{ orderDetail.createTime }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">用户：</span>
+              <span class="value">{{ orderDetail.userName }}</span>
             </div>
             <div class="detail-item">
               <span class="label">桌号：</span>
+              <span class="value">{{ orderDetail.tableName || orderDetail.tableId }}</span>
+            </div>
+            <div class="detail-item" v-if="orderDetail.tableCode">
+              <span class="label">桌位编码：</span>
               <span class="value">{{ orderDetail.tableCode }}</span>
             </div>
             <div class="detail-item">
               <span class="label">订单状态：</span>
               <el-tag :type="getStatusType(orderDetail.status)">
                 {{ getStatusText(orderDetail.status) }}
+              </el-tag>
+            </div>
+            <div class="detail-item">
+              <span class="label">支付状态：</span>
+              <el-tag :type="orderDetail.payStatus === 1 ? 'success' : 'info'">
+                {{ orderDetail.payStatus === 1 ? '已支付' : '未支付' }}
               </el-tag>
             </div>
             <div class="detail-item">
@@ -235,22 +186,18 @@
           <!-- 订单菜品列表 -->
           <div class="detail-dishes">
             <div class="section-title">订单菜品</div>
-            <el-table :data="orderDetail.dishes" border style="width: 100%">
+            <el-table :data="orderDetail.orderDetails" border style="width: 100%">
               <el-table-column label="菜品图片" width="100" align="center">
                 <template slot-scope="{row}">
-                  <img :src="row.dishImg" alt="菜品图片" class="dish-img">
+                  <img :src="row.dishImage" alt="菜品图片" class="dish-img">
                 </template>
               </el-table-column>
               <el-table-column label="菜品名称" prop="dishName" />
-              <el-table-column label="单价" width="100" align="center">
-                <template slot-scope="{row}">
-                  <span>¥{{ row.price }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="数量" width="100" align="center" prop="quantity" />
+              <el-table-column label="规格" prop="specificationName" width="100" />
+              <el-table-column label="数量" width="80" align="center" prop="number" />
               <el-table-column label="金额" width="100" align="center">
                 <template slot-scope="{row}">
-                  <span>¥{{ (row.price * row.quantity).toFixed(2) }}</span>
+                  <span>¥{{ row.amount }}</span>
                 </template>
               </el-table-column>
             </el-table>
@@ -264,7 +211,7 @@
             </div>
             <div class="total-item">
               <span class="label">订单总计：</span>
-              <span class="value price">¥{{ orderDetail.totalPrice }}</span>
+              <span class="value price">¥{{ orderDetail.amount }}</span>
             </div>
           </div>
         </div>
@@ -277,8 +224,6 @@
 import { 
   getOrderList, 
   getOrderDetail, 
-  acceptOrder, 
-  completeOrder, 
   cancelOrder,
   getOrderStatistics 
 } from '@/api/order'
@@ -331,7 +276,6 @@ export default {
   },
   created() {
     this.getList()
-    this.getStatistics()
   },
   methods: {
     // 获取订单列表
@@ -404,44 +348,9 @@ export default {
       })
     },
     
-    // 接单
-    handleAccept(row) {
-      this.$confirm('确认接受该订单?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        acceptOrder(row.id).then(() => {
-          this.$message({
-            type: 'success',
-            message: '接单成功!'
-          })
-          this.getList()
-          this.getStatistics()
-        })
-      }).catch(() => {})
-    },
-    
-    // 完成订单
-    handleComplete(row) {
-      this.$confirm('确认完成该订单?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        completeOrder(row.id).then(() => {
-          this.$message({
-            type: 'success',
-            message: '订单已完成!'
-          })
-          this.getList()
-        })
-      }).catch(() => {})
-    },
-    
     // 取消订单
     handleCancel(row) {
-      this.cancelForm.id = row.id
+      this.cancelForm.id = Number(row.id)
       this.cancelForm.reason = ''
       this.cancelDialogVisible = true
     },
@@ -450,26 +359,44 @@ export default {
     confirmCancel() {
       this.$refs.cancelForm.validate(valid => {
         if (valid) {
-          cancelOrder(this.cancelForm.id, this.cancelForm.reason).then(() => {
+          try {
+            cancelOrder(this.cancelForm.id, this.cancelForm.reason)
+              .then(response => {
+                this.$message({
+                  type: 'success',
+                  message: '订单已取消!'
+                })
+                this.cancelDialogVisible = false
+                this.getList()
+              })
+              .catch(error => {
+                let errorMsg = '取消订单失败，请重试'
+                if (error.response && error.response.data && error.response.data.msg) {
+                  errorMsg = error.response.data.msg
+                }
+                this.$message({
+                  type: 'error',
+                  message: errorMsg
+                })
+              })
+          } catch (err) {
+            console.error('取消订单出错:', err)
             this.$message({
-              type: 'success',
-              message: '订单已取消!'
+              type: 'error',
+              message: '取消订单失败，请重试'
             })
-            this.cancelDialogVisible = false
-            this.getList()
-            this.getStatistics()
-          })
+          }
         }
       })
     },
     
     // 计算订单总数量
     getTotalQuantity() {
-      if (!this.orderDetail || !this.orderDetail.dishes) {
+      if (!this.orderDetail || !this.orderDetail.orderDetails) {
         return 0
       }
-      return this.orderDetail.dishes.reduce((total, item) => {
-        return total + item.quantity
+      return this.orderDetail.orderDetails.reduce((total, item) => {
+        return total + item.number
       }, 0)
     }
   }
@@ -485,92 +412,119 @@ export default {
   }
 }
 
-.statistics-container {
+.dashboard-container {
+  margin: 30px;
+}
+
+.dashboard-item {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 20px;
   margin-bottom: 20px;
-  .card-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100px;
-    
-    .card-panel-text {
-      font-size: 14px;
-      color: #999;
-      margin-bottom: 10px;
-    }
-    
-    .card-panel-num {
-      font-size: 24px;
-      font-weight: bold;
-    }
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.card-item {
+  color: #666;
+  text-align: center;
+  
+  .card-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .card-num {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .card-today {
+    font-size: 18px;
+    font-weight: bold;
+    color: #409EFF;
+  }
+  
+  .card-pending {
+    color: #E6A23C;
+  }
+  
+  .card-amount {
+    color: #67C23A;
   }
 }
 
+// 订单详情样式
 .order-detail {
   .detail-content {
-    padding: 20px;
+    overflow: hidden;
   }
   
   .detail-header {
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .detail-item {
+    margin-bottom: 10px;
     display: flex;
-    flex-wrap: wrap;
     
-    .detail-item {
-      margin-right: 20px;
-      margin-bottom: 10px;
-      
-      .label {
-        color: #606266;
-        margin-right: 5px;
-      }
-      
-      .value {
-        color: #303133;
-        font-weight: 500;
-      }
+    &:last-child {
+      margin-bottom: 0;
     }
+    
+    .label {
+      width: 100px;
+      color: #606266;
+    }
+    
+    .value {
+      flex: 1;
+      color: #333;
+    }
+  }
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 3px solid #409EFF;
   }
   
   .detail-dishes {
     margin-bottom: 20px;
-    
-    .section-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      color: #303133;
-    }
-    
-    .dish-img {
-      width: 60px;
-      height: 60px;
-      border-radius: 4px;
-    }
+  }
+  
+  .dish-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    object-fit: cover;
   }
   
   .detail-total {
-    text-align: right;
-    padding-top: 15px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
     
     .total-item {
+      display: flex;
+      justify-content: flex-end;
       margin-bottom: 10px;
       
-      .label {
-        color: #606266;
+      &:last-child {
+        margin-bottom: 0;
       }
       
-      .value {
-        font-weight: 500;
-        margin-left: 10px;
-        
-        &.price {
-          color: #f56c6c;
-          font-size: 20px;
-        }
+      .label {
+        margin-right: 10px;
+      }
+      
+      .price {
+        color: #f56c6c;
+        font-weight: bold;
       }
     }
   }

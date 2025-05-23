@@ -16,6 +16,7 @@ Page(auth.pageAuthMixin({
       tableInfo: '',
       tableId: ''
     },
+    inputTableId: '', // 输入的桌台号
     loading: true
   },
 
@@ -372,6 +373,55 @@ Page(auth.pageAuthMixin({
           });
         }
       }
+    });
+  },
+
+  /**
+   * 处理桌台号输入变化
+   */
+  onTableInputChange: function(e) {
+    this.setData({
+      inputTableId: e.detail.value
+    });
+  },
+  
+  /**
+   * 确认手动输入的桌台号
+   */
+  confirmTableInput: function() {
+    const tableId = this.data.inputTableId.trim();
+    
+    if (!tableId) {
+      wx.showToast({
+        title: '请输入桌台号',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 验证桌台号格式
+    if (!/^[A-Za-z0-9-]+$/.test(tableId)) {
+      wx.showToast({
+        title: '桌台号格式不正确',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 设置桌号信息
+    this.setData({
+      'scanStatus.hasScan': true,
+      'scanStatus.tableInfo': '桌号: ' + tableId,
+      'scanStatus.tableId': tableId,
+      'inputTableId': '' // 清空输入框
+    });
+    
+    // 记录到全局数据
+    app.globalData.tableId = tableId;
+    
+    wx.showToast({
+      title: '桌号设置成功',
+      icon: 'success'
     });
   }
 })) 

@@ -7,7 +7,7 @@ import request from '@/utils/request'
  */
 export function getOrderList(query) {
   return request({
-    url: '/admin/order/list',
+    url: '/admin/order/page',
     method: 'get',
     params: query
   })
@@ -20,7 +20,7 @@ export function getOrderList(query) {
  */
 export function getOrderDetail(id) {
   return request({
-    url: `/admin/order/${id}`,
+    url: `/admin/order/detail/${id}`,
     method: 'get'
   })
 }
@@ -56,10 +56,14 @@ export function completeOrder(id) {
  * @returns {Promise}
  */
 export function cancelOrder(id, reason) {
+  // 确保id为数字类型
+  const orderId = Number(id);
+  
   return request({
-    url: `/admin/order/cancel/${id}`,
+    url: '/admin/order/cancel',
     method: 'post',
     data: {
+      id: orderId,
       reason
     }
   })

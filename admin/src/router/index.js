@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import { getToken } from '@/utils/auth'
 
 Vue.use(VueRouter)
 
@@ -41,8 +42,17 @@ const router = new VueRouter({
 // 导航守卫
 router.beforeEach((to, from, next) => {
   if (to.path === '/login') return next()
-  const token = window.sessionStorage.getItem('token')
-  if (!token) return next('/login')
+  
+  // 使用getToken获取token
+  const token = getToken()
+  console.log('路由守卫检查token:', token)
+  
+  if (!token) {
+    console.log('无token，跳转到登录页')
+    return next('/login')
+  }
+  
+  console.log('有token，允许访问:', to.path)
   next()
 })
 

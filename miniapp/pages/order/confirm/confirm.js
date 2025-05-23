@@ -58,7 +58,7 @@ Page(auth.pageAuthMixin({
    * 获取桌位信息
    */
   getTableInfo(tableId) {
-    request.get('/mini/table/info/' + tableId).then(res => {
+    request.get('/mini/table/name/' + tableId).then(res => {
       if (res.code === 1 && res.data) {
         this.setData({
           tableName: res.data.name,
@@ -230,10 +230,30 @@ Page(auth.pageAuthMixin({
       id: orderId,
       payMethod: this.data.selectedPayMethod || 1 // 使用选中的支付方式，默认为微信支付
     }).then(res => {
-      if (res.code === 1 && res.data) {
+      if (res.code === 1) {
+        // 已经支付成功的情况（服务器可能直接更新了订单状态）
+        if (!res.data || Object.keys(res.data).length === 0) {
+          // 支付成功，跳转到订单详情
+          wx.showToast({
+            title: '支付成功',
+            icon: 'success',
+            duration: 2000,
+            complete: () => {
+              wx.navigateTo({
+                url: '/pages/order/detail/detail?id=' + orderId
+              });
+            }
+          });
+          return;
+        }
+        
         // 调起微信支付
         wx.requestPayment({
-          ...res.data,
+          timeStamp: res.data.timeStamp,
+          nonceStr: res.data.nonceStr,
+          package: res.data.package,
+          signType: res.data.signType,
+          paySign: res.data.paySign,
           success: () => {
             // 支付成功，跳转到订单详情
             wx.showToast({
@@ -248,6 +268,7 @@ Page(auth.pageAuthMixin({
             });
           },
           fail: (err) => {
+            console.error('微信支付失败:', err);
             wx.showModal({
               title: '支付失败',
               content: '您已取消支付',
@@ -263,6 +284,7 @@ Page(auth.pageAuthMixin({
           }
         });
       } else {
+        console.error('支付接口返回错误:', res);
         wx.showModal({
           title: '提示',
           content: res.msg || '发起支付失败',
@@ -277,6 +299,7 @@ Page(auth.pageAuthMixin({
         });
       }
     }).catch(err => {
+      console.error('支付接口请求异常:', err);
       wx.showModal({
         title: '提示',
         content: '网络异常，请稍后再试',

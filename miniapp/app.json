@@ -24,10 +24,14 @@
     "list": [
       {
         "pagePath": "pages/index/index",
+        "iconPath": "images/icons/icon-home.png",
+        "selectedIconPath": "images/icons/icon-home-active.png",
         "text": "首页"
       },
       {
         "pagePath": "pages/user/user",
+        "iconPath": "images/icons/icon-me.png",
+        "selectedIconPath": "images/icons/icon-me-active.png",
         "text": "我的"
       }
     ]

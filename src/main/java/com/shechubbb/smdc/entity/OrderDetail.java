@@ -53,4 +53,19 @@ public class OrderDetail implements Serializable {
      * 创建时间
      */
     private LocalDateTime createTime;
+    
+    /**
+     * 菜品名称
+     */
+    private String dishName;
+    
+    /**
+     * 菜品图片
+     */
+    private String dishImage;
+    
+    /**
+     * 规格名称
+     */
+    private String specificationName;
 } 

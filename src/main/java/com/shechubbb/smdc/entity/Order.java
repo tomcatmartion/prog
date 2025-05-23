@@ -35,9 +35,9 @@ public class Order implements Serializable {
     private Long userId;
 
     /**
-     * 桌位ID
+     * 桌位ID/桌台号，可以是字符串格式
      */
-    private Long tableId;
+    private String tableId;
 
     /**
      * 总金额

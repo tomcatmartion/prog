@@ -24,8 +24,8 @@ export default {
   data() {
     return {
       loginForm: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: '123456'
       },
       loginRules: {
         username: [
@@ -45,13 +45,14 @@ export default {
       this.$refs.loginFormRef.validate(async valid => {
         if (!valid) return
         try {
-          const { data: res } = await this.$http.post('/admin/employee/login', this.loginForm)
-          if (res.code !== 1) return this.$message.error(res.msg)
+          console.log('开始登录请求...')
+          const result = await this.$store.dispatch('login', this.loginForm)
+          console.log('登录成功，返回数据:', result)
           this.$message.success('登录成功')
-          window.sessionStorage.setItem('token', res.data.token)
           this.$router.push('/home')
         } catch (error) {
-          this.$message.error('登录失败')
+          console.error('登录失败:', error)
+          this.$message.error(typeof error === 'string' ? error : '登录失败')
         }
       })
     }

@@ -7,17 +7,23 @@ import com.shechubbb.smdc.common.constant.OrderStatusConstant;
 import com.shechubbb.smdc.common.constant.PayMethodConstant;
 import com.shechubbb.smdc.common.constant.PayStatusConstant;
 import com.shechubbb.smdc.common.exception.BusinessException;
+import com.shechubbb.smdc.config.ImageConfig.ImageUrlConverter;
+import com.shechubbb.smdc.entity.Dish;
 import com.shechubbb.smdc.entity.Order;
 import com.shechubbb.smdc.entity.OrderDetail;
+import com.shechubbb.smdc.entity.Specification;
 import com.shechubbb.smdc.entity.TableInfo;
 import com.shechubbb.smdc.entity.User;
+import com.shechubbb.smdc.mapper.DishMapper;
 import com.shechubbb.smdc.mapper.OrderMapper;
 import com.shechubbb.smdc.service.OrderDetailService;
 import com.shechubbb.smdc.service.OrderService;
+import com.shechubbb.smdc.service.SpecificationService;
 import com.shechubbb.smdc.service.TableInfoService;
 import com.shechubbb.smdc.service.UserService;
 import com.shechubbb.smdc.vo.OrderDetailVO;
 import com.shechubbb.smdc.vo.OrderVO;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +38,7 @@ import java.util.stream.Collectors;
 /**
  * 订单服务实现类
  */
+@Slf4j
 @Service
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements OrderService {
 
@@ -43,6 +50,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private TableInfoService tableInfoService;
+    
+    @Autowired
+    private DishMapper dishMapper;
+    
+    @Autowired
+    private SpecificationService specificationService;
+    
+    @Autowired(required = false)
+    private ImageUrlConverter imageUrlConverter;
 
     /**
      * 创建订单
@@ -58,16 +74,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 检查桌位(如果提供了桌位ID)
-        if (orderVO.getTableId() != null) {
-            TableInfo tableInfo = tableInfoService.getById(orderVO.getTableId());
-            if (tableInfo == null) {
-                throw new BusinessException("桌位不存在");
+        if (orderVO.getTableId() != null && !orderVO.getTableId().isEmpty()) {
+            // 尝试根据ID或编码获取桌位信息
+            TableInfo tableInfo = null;
+            try {
+                // 尝试按数字ID查询
+                Long tableIdNum = Long.parseLong(orderVO.getTableId());
+                tableInfo = tableInfoService.getById(tableIdNum);
+            } catch (NumberFormatException e) {
+                // 如果不是数字，则可能是桌位编码
+                tableInfo = tableInfoService.getByCode(orderVO.getTableId());
+                
+                // 如果还没找到，尝试按名称查询
+                if (tableInfo == null) {
+                    tableInfo = tableInfoService.getByName(orderVO.getTableId());
+                }
             }
             
-            // 更新桌位状态
-            tableInfo.setStatus(1); // 使用中
-            tableInfo.setUpdateTime(LocalDateTime.now());
-            tableInfoService.updateById(tableInfo);
+            if (tableInfo != null) {
+                // 更新桌位状态
+                tableInfo.setStatus(1); // 使用中
+                tableInfo.setUpdateTime(LocalDateTime.now());
+                tableInfoService.updateById(tableInfo);
+            }
         }
         
         // 设置订单基本信息
@@ -89,10 +118,26 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 保存订单
         save(order);
         
-        // 保存订单明细
+        // 保存订单明细，并同时缓存菜品信息
         List<OrderDetail> orderDetails = orderVO.getOrderDetails().stream().map(item -> {
             OrderDetail orderDetail = new OrderDetail();
             BeanUtils.copyProperties(item, orderDetail);
+            
+            // 查询并缓存菜品信息
+            Dish dish = dishMapper.selectById(item.getDishId());
+            if (dish != null) {
+                orderDetail.setDishName(dish.getName());
+                orderDetail.setDishImage(dish.getImage());
+            }
+            
+            // 查询并缓存规格信息
+            if (item.getSpecificationId() != null) {
+                Specification specification = specificationService.getById(item.getSpecificationId());
+                if (specification != null) {
+                    orderDetail.setSpecificationName(specification.getName());
+                }
+            }
+            
             return orderDetail;
         }).collect(Collectors.toList());
         
@@ -211,12 +256,25 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         
         updateById(order);
         
-        // 更新桌位状态
-        TableInfo tableInfo = tableInfoService.getById(order.getTableId());
-        if (tableInfo != null) {
-            tableInfo.setStatus(0); // 空闲
-            tableInfo.setUpdateTime(LocalDateTime.now());
-            tableInfoService.updateById(tableInfo);
+        // 更新桌位状态（如果可以解析为数字ID）
+        if (order.getTableId() != null && !order.getTableId().isEmpty()) {
+            try {
+                Long tableIdNum = Long.parseLong(order.getTableId());
+                TableInfo tableInfo = tableInfoService.getById(tableIdNum);
+                if (tableInfo != null) {
+                    tableInfo.setStatus(0); // 空闲
+                    tableInfo.setUpdateTime(LocalDateTime.now());
+                    tableInfoService.updateById(tableInfo);
+                }
+            } catch (NumberFormatException e) {
+                // 如果不是数字ID，可能是桌位编码，尝试根据编码查找
+                TableInfo tableInfo = tableInfoService.getByCode(order.getTableId());
+                if (tableInfo != null) {
+                    tableInfo.setStatus(0); // 空闲
+                    tableInfo.setUpdateTime(LocalDateTime.now());
+                    tableInfoService.updateById(tableInfo);
+                }
+            }
         }
     }
 
@@ -244,13 +302,44 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 查询桌位信息
-        TableInfo tableInfo = tableInfoService.getById(order.getTableId());
-        if (tableInfo != null) {
-            orderVO.setTableName(tableInfo.getName());
+        if (order.getTableId() != null && !order.getTableId().isEmpty()) {
+            try {
+                // 尝试解析为数字ID
+                Long tableIdNum = Long.parseLong(order.getTableId());
+                TableInfo tableInfo = tableInfoService.getById(tableIdNum);
+                if (tableInfo != null) {
+                    orderVO.setTableName(tableInfo.getName());
+                    orderVO.setTableCode(tableInfo.getCode());
+                }
+            } catch (NumberFormatException e) {
+                // 如果不是数字ID，可能是桌位编码，尝试根据编码查找
+                TableInfo tableInfo = tableInfoService.getByCode(order.getTableId());
+                if (tableInfo != null) {
+                    orderVO.setTableName(tableInfo.getName());
+                    orderVO.setTableCode(tableInfo.getCode());
+                } else {
+                    // 如果还没找到，尝试按名称查询
+                    tableInfo = tableInfoService.getByName(order.getTableId());
+                    if (tableInfo != null) {
+                        orderVO.setTableName(tableInfo.getName());
+                        orderVO.setTableCode(tableInfo.getCode());
+                    } else {
+                        // 如果都找不到，直接使用tableId作为名称和编码
+                        orderVO.setTableName("桌号" + order.getTableId());
+                        orderVO.setTableCode(order.getTableId());
+                    }
+                }
+            }
         }
         
         // 查询订单明细
         List<OrderDetailVO> orderDetailVOs = orderDetailService.getByOrderId(id);
+        
+        // 处理订单明细中的图片URL
+        if (imageUrlConverter != null && orderDetailVOs != null && !orderDetailVOs.isEmpty()) {
+            imageUrlConverter.processOrderDetailImages(orderDetailVOs);
+        }
+        
         orderVO.setOrderDetails(orderDetailVOs);
         
         return orderVO;
@@ -331,9 +420,27 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
             
             // 查询桌位信息
-            TableInfo tableInfo = tableInfoService.getById(order.getTableId());
-            if (tableInfo != null) {
-                orderVO.setTableName(tableInfo.getName());
+            if (order.getTableId() != null && !order.getTableId().isEmpty()) {
+                try {
+                    // 尝试解析为数字ID
+                    Long tableIdNum = Long.parseLong(order.getTableId());
+                    TableInfo tableInfo = tableInfoService.getById(tableIdNum);
+                    if (tableInfo != null) {
+                        orderVO.setTableName(tableInfo.getName());
+                        orderVO.setTableCode(tableInfo.getCode());
+                    }
+                } catch (NumberFormatException e) {
+                    // 如果不是数字ID，可能是桌位编码，尝试根据编码查找
+                    TableInfo tableInfo = tableInfoService.getByCode(order.getTableId());
+                    if (tableInfo != null) {
+                        orderVO.setTableName(tableInfo.getName());
+                        orderVO.setTableCode(tableInfo.getCode());
+                    } else {
+                        // 如果还没找到，直接使用tableId作为名称
+                        orderVO.setTableName(order.getTableId());
+                        orderVO.setTableCode(order.getTableId());
+                    }
+                }
             }
             
             return orderVO;
