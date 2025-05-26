@@ -50,9 +50,9 @@
       </el-table-column>
       <el-table-column label="图片" width="100" align="center">
         <template slot-scope="scope">
-          <el-image 
+          <el-image
             style="width: 60px; height: 60px"
-            :src="scope.row.image" 
+            :src="scope.row.image"
             :preview-src-list="[scope.row.image]"
             fit="cover">
             <div slot="error" class="image-slot">
@@ -155,7 +155,7 @@
             <el-radio :label="0">停售</el-radio>
           </el-radio-group>
         </el-form-item>
-        
+
         <!-- 规格信息 -->
         <el-divider content-position="left">规格信息</el-divider>
         <div>
@@ -225,7 +225,7 @@ export default {
         price: [{ required: true, message: '请输入价格', trigger: 'blur' }]
       },
       uploadHeaders: {
-        Authorization: getToken()
+        Authorization: "Bearer " + getToken()
       }
     }
   },
@@ -455,7 +455,7 @@ export default {
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    
+
     &:hover {
       border-color: #409EFF;
     }
@@ -480,4 +480,4 @@ export default {
 .el-divider {
   margin: 24px 0;
 }
-</style> 
+</style>

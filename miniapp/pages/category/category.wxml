@@ -57,7 +57,7 @@
           <view class="dish-price-action">
             <view class="dish-price price">{{item.price}}</view>
             <view class="dish-add" catchtap="onAddToCart" data-index="{{index}}">
-              <view class="add-icon">+</view>
+              <image class="add-cart-icon" src="../../images/icons/icon-cart-active.png"></image>
             </view>
           </view>
         </view>

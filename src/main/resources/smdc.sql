@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户';
 
 -- 添加测试用户
-INSERT INTO `user` (`id`, `nick_name`, `avatar_url`, `gender`, `city`, `province`, `country`, `phone`, `session_key`, `username`, `password`, `last_login_time`, `create_time`, `update_time`) 
+INSERT INTO `user` (`id`, `nick_name`, `avatar_url`, `gender`, `city`, `province`, `country`, `phone`, `session_key`, `username`, `password`, `last_login_time`, `create_time`, `update_time`)
 VALUES (9999, '测试用户', '/images/default-avatar.png', 1, '广州', '广东', '中国', '13800138000', 'init_session_key', 'test', '123456', NOW(), NOW(), NOW());
 
 -- 员工表
@@ -42,11 +42,11 @@ CREATE TABLE IF NOT EXISTS `employee` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工信息表';
 
 -- 初始化管理员账号，密码为123456的MD5值
-INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `create_time`, `update_time`) 
+INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `create_time`, `update_time`)
 VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 1, NOW(), NOW());
 
 -- 添加测试账号，密码为123456的MD5值
-INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `phone`, `create_time`, `update_time`) 
+INSERT INTO `employee` (`id`, `username`, `password`, `name`, `role`, `phone`, `create_time`, `update_time`)
 VALUES (2, 'test', 'e10adc3949ba59abbe56e057f20f883e', '测试账号', 2, '13800138000', NOW(), NOW());
 
 -- 分类表
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `order` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
   `number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '订单号',
   `user_id` bigint(20) NOT NULL COMMENT '用户id',
-  `table_id` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '桌位id或桌台号',
+  `table_id` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '桌位id或桌台号',
   `amount` decimal(10,2) NOT NULL COMMENT '总金额',
   `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '订单状态 1:待付款 2:待接单 3:待上菜 4:已完成 5:已取消',
   `pay_method` tinyint(4) DEFAULT NULL COMMENT '支付方式 1:微信支付 2:支付宝支付',
@@ -124,6 +124,9 @@ CREATE TABLE IF NOT EXISTS `order_detail` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
   `order_id` bigint(20) NOT NULL COMMENT '订单id',
   `dish_id` bigint(20) NOT NULL COMMENT '菜品id',
+  `dish_name` varchar(32) NOT NULL COMMENT '菜品名称',
+  `dish_image` varchar(255)DEFAULT NULL COMMENT '菜品图片',
+  `specification_name` varchar(32) DEFAULT NULL COMMENT '规格名',
   `specification_id` bigint(20) DEFAULT NULL COMMENT '规格id',
   `number` int(11) NOT NULL COMMENT '数量',
   `amount` decimal(10,2) NOT NULL COMMENT '金额',
@@ -150,4 +153,4 @@ CREATE TABLE `shop_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='店铺信息表';
 
 -- 插入默认店铺数据
-INSERT INTO `shop_info` (`id`, `name`, `slogan`, `status`) VALUES (1, '智能点餐系统', '便捷、高效、美味', 1); 
+INSERT INTO `shop_info` (`id`, `name`, `slogan`, `status`) VALUES (1, '智能点餐系统', '便捷、高效、美味', 1);

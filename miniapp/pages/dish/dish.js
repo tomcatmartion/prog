@@ -13,7 +13,8 @@ Page({
     currentSpecification: null,
     quantity: 1,
     isLoading: false,
-    tableId: null
+    tableId: null,
+    isCartActive: false
   },
 
   /**
@@ -126,6 +127,18 @@ Page({
     
     // 添加到购物车
     cartUtil.addToCart(dish, specId, quantity);
+    
+    // 显示激活状态的图标
+    this.setData({
+      isCartActive: true
+    });
+    
+    // 1.5秒后恢复默认图标
+    setTimeout(() => {
+      this.setData({
+        isCartActive: false
+      });
+    }, 1500);
   },
   
   /**

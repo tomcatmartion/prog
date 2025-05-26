@@ -20,7 +20,8 @@ Page(auth.pageAuthMixin({
     // 规格选择相关数据
     showSpecDialog: false, // 是否显示规格选择对话框
     currentDish: null, // 当前选择的菜品
-    selectedSpecIndex: -1 // 选中的规格索引
+    selectedSpecIndex: -1, // 选中的规格索引
+    activeCartIndex: -1 // 当前激活的购物车图标索引
   },
 
   /**
@@ -158,6 +159,18 @@ Page(auth.pageAuthMixin({
   onAddToCart(e) {
     const index = e.currentTarget.dataset.index;
     const dish = this.data.dishes[index];
+    
+    // 设置当前图标为激活状态
+    this.setData({
+      activeCartIndex: index
+    });
+    
+    // 1.5秒后恢复为非激活状态
+    setTimeout(() => {
+      this.setData({
+        activeCartIndex: -1
+      });
+    }, 1500);
     
     // 判断是否有多个规格
     if (dish.specifications && dish.specifications.length > 1) {

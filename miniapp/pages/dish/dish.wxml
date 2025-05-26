@@ -56,7 +56,10 @@
   
   <!-- 底部操作栏 -->
   <view class="footer-bar safe-bottom" wx:if="{{dish}}">
-    <view class="action-btn add-cart" bindtap="addToCart">加入购物车</view>
+    <view class="action-btn add-cart" bindtap="addToCart">
+      <image class="cart-icon" src="{{isCartActive ? '../../images/icons/icon-cart-active.png' : '../../images/icons/icon-cart.png'}}"></image>
+      加入购物车
+    </view>
     <view class="action-btn order-now" bindtap="orderNow">立即下单</view>
   </view>
 </view>

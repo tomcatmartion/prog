@@ -17,12 +17,6 @@ Page(auth.pageAuthMixin({
         iconType: 'success'
       },
       {
-        id: 2,
-        text: '收货地址',
-        url: '/pages/address/list/list',
-        iconType: 'location'
-      },
-      {
         id: 3,
         text: '关于我们',
         url: '/pages/about/about',

@@ -63,8 +63,8 @@
 }
 
 .cart-icon {
-  width: 50rpx;
-  height: 50rpx;
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .cart-count {
@@ -111,8 +111,8 @@
   height: 70rpx;
   border-radius: 35rpx;
   font-size: 28rpx;
-  line-height: 70rpx;
   text-align: center;
+  font-weight: bolder;
 }
 
 .checkout-btn.active {

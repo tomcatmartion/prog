@@ -194,6 +194,12 @@
   font-weight: bold;
 }
 
+.cart-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+}
+
 .add-cart {
   background-color: var(--secondary-color);
   color: white;

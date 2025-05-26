@@ -3,7 +3,7 @@
   <!-- 购物车按钮区域 -->
   <view class="cart-left" bindtap="showCart">
     <view class="cart-icon-wrapper {{totalQuantity > 0 ? 'has-items' : ''}}">
-      <icon type="shopping" size="25" color="{{totalQuantity > 0 ? '#ffffff' : '#333333'}}"/>
+      <image class="cart-icon" src="/images/icons/{{totalQuantity > 0 ? 'icon-cart-active.png' : 'icon-cart.png'}}"></image>
       <view class="cart-count" wx:if="{{totalQuantity > 0}}">{{totalQuantity}}</view>
     </view>
     <view class="cart-info">
